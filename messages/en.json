@@ -1,0 +1,358 @@
+{
+    "home": {
+        "header": {
+            "features": "Features",
+            "howItWorks": "How it works",
+            "pricing": "Pricing",
+            "login": "Sign in",
+            "createAccount": "Create account",
+            "register": "Create account"
+        },
+        "hero": {
+            "badge": "Manage your bookings with ease",
+            "title": "Stop wasting time",
+            "titleHighlight": "managing bookings",
+            "description": "Create your booking page, share your link with your customers and let them book whenever they want. Everything organized in one place.",
+            "register": "Create free account",
+            "createAccount": "Create your free account",
+            "discover": "Discover how it works",
+            "noCreditCard": "No credit card required",
+            "setup": "Setup in minutes"
+        },
+        "dashboard": {
+            "dashboard": "Dashboard",
+            "bookings": "Bookings",
+            "services": "Services",
+            "availability": "Availability",
+            "bookingsCount": "Bookings",
+            "customers": "Customers",
+            "upcoming": "Upcoming"
+        },
+        "features": {
+            "eyebrow": "Everything you need",
+            "title": "One platform to manage your business",
+            "description": "Automate bookings and dedicate your time to your customers.",
+            "items": {
+                "onlineBookings": {
+                    "title": "Online bookings",
+                    "description": "Let your customers book appointments online 24/7, without calls or messages."
+                },
+                "availability": {
+                    "title": "Availability",
+                    "description": "Set your available hours and automatically prevent bookings outside your schedule."
+                },
+                "bookingPage": {
+                    "title": "Booking page",
+                    "description": "Get a public booking page that you can share with your customers or add to your website."
+                },
+                "customers": {
+                    "title": "Customer management",
+                    "description": "Keep your customers organized and easily view their booking history."
+                },
+                "calendar": {
+                    "title": "Calendar",
+                    "description": "View your upcoming bookings in a clear and easy-to-use calendar."
+                },
+                "payments": {
+                    "title": "Online payments",
+                    "description": "Get paid for your services directly during the booking process."
+                }
+            }
+        },
+        "howItWorks": {
+            "title": "Get started in minutes",
+            "description": "No complicated setup",
+            "steps": {
+                "createAccount": {
+                    "title": "Create your account",
+                    "description": "Register your organization and configure your basic business information."
+                },
+                "configureServices": {
+                    "title": "Set up your services",
+                    "description": "Create your booking types, duration, hours and availability."
+                },
+                "shareLink": {
+                    "title": "Share your link",
+                    "description": "Send your booking page to your customers and start receiving appointments."
+                }
+            }
+        },
+        "pricing": {
+            "eyebrow": "Simple pricing",
+            "title": "Choose the plan that fits your business",
+            "description": "Start for free and upgrade when you need more.",
+            "mostPopular": "Most popular",
+            "perMonth": "/ month",
+            "startFree": "Start for free",
+            "startNow": "Get started"
+        },
+        "cta": {
+            "title": "Start receiving bookings today",
+            "description": "Create your account and set up your booking system in just a few minutes.",
+            "button": "Create your free account"
+        },
+        "footer": {
+            "copyright": "© 2026 Booking. All rights reserved.",
+            "privacy": "Privacy",
+            "terms": "Terms"
+        }
+    },
+    "register": {
+        "title": "Create your account",
+        "description": "Create your account and organization to get started.",
+        "form": {
+            "name": {
+                "label": "Your name",
+                "placeholder": "John Doe"
+            },
+            "email": {
+                "label": "Email",
+                "placeholder": "you@example.com"
+            },
+            "organization": {
+                "label": "Organization name",
+                "placeholder": "Your company",
+                "checking": "Checking availability...",
+                "exists": "This organization name is already taken.",
+                "available": "This organization name is available.",
+                "checkError": "Could not check organization availability."
+            },
+            "timezone": {
+                "label": "Timezone",
+                "hint": "This will be used to correctly calculate the times of your bookings."
+            },
+            "password": {
+                "label": "Password",
+                "placeholder": "••••••••",
+                "hint": "At least 8 characters"
+            },
+            "passwordConfirmation": {
+                "label": "Confirm password",
+                "placeholder": "••••••••"
+            }
+        },
+        "submit": {
+            "default": "Create account",
+            "loading": "Creating account..."
+        },
+        "errors": {
+            "passwordMismatch": "Passwords do not match.",
+            "apiNotConfigured": "NEXT_PUBLIC_API_URL is not configured.",
+            "organizationExists": "This organization name is already taken.",
+            "default": "Unable to create your account."
+        },
+        "login": {
+            "question": "Already have an account?",
+            "link": "Sign in"
+        },
+        "terms": "By creating an account, you agree to our terms and conditions."
+    },
+    "login": {
+        "title": "Welcome back",
+        "subtitle": "Sign in to your account to continue.",
+        "continueWithGoogle": "Continue with Google",
+        "or": "or",
+        "email": "Email",
+        "emailPlaceholder": "you@example.com",
+        "password": "Password",
+        "passwordPlaceholder": "••••••••",
+        "forgotPassword": "Forgot your password?",
+        "submit": "Sign in",
+        "noAccount": "Don't have an account?",
+        "createAccount": "Create account",
+        "termsPrefix": "By signing in, you agree to our",
+        "terms": "Terms",
+        "and": "and",
+        "privacy": "Privacy Policy",
+        "loading": "Logging in..."
+    },
+    "dashboard": {
+        "account": {
+            "logout": "Logout"
+        },
+        "title": "Dashboard",
+        "subtitle": "Manage your bookings and organization.",
+        "stats": {
+            "upcomingBookings": "Upcoming bookings",
+            "eventTypes": "Event types",
+            "customers": "Customers",
+            "teamMembers": "Team members"
+        },
+        "header": {
+            "title": "Dashboard",
+            "account": "Account"
+        },
+        "sidebar": {
+            "dashboard": "Dashboard",
+            "calendar": "Calendar",
+            "bookings": "Bookings",
+            "eventTypes": "Event types",
+            "availability": "Availability",
+            "customers": "Customers",
+            "team": "Team",
+            "settings": "Settings"
+        },
+        "calendar": {
+            "title": "Calendar",
+            "subtitle": "Manage your bookings and availability.",
+            "createBooking": "Create booking",
+            "today": "Today",
+            "previous": "Previous",
+            "next": "Next",
+            "currentMonth": "August 2026",
+            "month": "Month",
+            "week": "Week",
+            "day": "Day",
+            "empty": {
+                "title": "No bookings yet",
+                "description": "Your bookings will appear here."
+            }
+        },
+        "bookings": {
+            "title": "Bookings",
+            "subtitle": "Manage and view all your bookings.",
+            "createBooking": "Create booking",
+            "search": "Search bookings...",
+            "filters": {
+                "all": "All",
+                "upcoming": "Upcoming",
+                "past": "Past"
+            },
+            "table": {
+                "customer": "Customer",
+                "event": "Event",
+                "date": "Date",
+                "status": "Status",
+                "actions": "Actions"
+            },
+            "empty": {
+                "title": "No bookings",
+                "description": "Bookings will appear here when your customers make one."
+            }
+        },
+        "eventTypes": {
+            "title": "Event types",
+            "subtitle": "Create and manage the booking types you offer.",
+            "create": "Create event type",
+            "empty": {
+                "title": "No event types",
+                "description": "Create your first event type to start accepting bookings.",
+                "action": "Create event type"
+            }
+        },
+        "availability": {
+            "title": "Availability",
+            "subtitle": "Configure when you are available to receive bookings.",
+            "weekly": {
+                "title": "Weekly schedule",
+                "subtitle": "Define your regular availability schedule."
+            },
+            "exceptions": {
+                "title": "Exceptions",
+                "subtitle": "Add days when your availability is different.",
+                "empty": "No exceptions configured."
+            },
+            "days": {
+                "monday": "Monday",
+                "tuesday": "Tuesday",
+                "wednesday": "Wednesday",
+                "thursday": "Thursday",
+                "friday": "Friday",
+                "saturday": "Saturday",
+                "sunday": "Sunday"
+            },
+            "closed": "Closed",
+            "actions": {
+                "add": "Add schedule",
+                "edit": "Edit",
+                "addException": "Add exception"
+            }
+        },
+        "customers": {
+            "title": "Customers",
+            "subtitle": "Manage your organization customers.",
+            "list": {
+                "title": "Customers",
+                "subtitle": "View and manage your customers.",
+                "columns": {
+                    "name": "Name",
+                    "email": "Email",
+                    "phone": "Phone",
+                    "bookings": "Bookings",
+                    "createdAt": "Created"
+                }
+            },
+            "actions": {
+                "add": "Add customer"
+            },
+            "empty": {
+                "title": "No customers yet",
+                "description": "Customers will appear here when they make a booking."
+            }
+        },
+        "settings": {
+            "title": "Settings",
+            "subtitle": "Manage your organization, account and preferences.",
+            "organization": {
+                "title": "Organización",
+                "description": "Configura la información principal de tu organización.",
+                "name": "Nombre de la organización",
+                "namePlaceholder": "Introduce el nombre de la organización",
+                "timezone": "Zona horaria",
+                "business": {
+                    "title": "Información empresarial",
+                    "description": "Esta información se utilizará para la facturación y la configuración de pagos.",
+                    "legalName": "Nombre legal de la empresa",
+                    "legalNamePlaceholder": "Introduce el nombre legal de la empresa",
+                    "taxId": "NIF / Tax ID",
+                    "taxIdPlaceholder": "Introduce el NIF / Tax ID",
+                    "businessType": "Tipo de negocio",
+                    "phoneNumber": "Teléfono",
+                    "phoneNumberPlaceholder": "Introduce el número de teléfono",
+                    "types": {
+                        "company": "Empresa",
+                        "individual": "Autónomo / Persona física",
+                        "nonProfit": "Organización sin ánimo de lucro"
+                    }
+                },
+                "address": {
+                    "title": "Dirección",
+                    "description": "Dirección legal o fiscal de la organización.",
+                    "street": "Dirección",
+                    "streetPlaceholder": "Calle, número y puerta",
+                    "unit": "Piso, puerta u otros",
+                    "unitPlaceholder": "Piso, puerta, oficina...",
+                    "city": "Ciudad",
+                    "cityPlaceholder": "Introduce la ciudad",
+                    "province": "Provincia",
+                    "provincePlaceholder": "Introduce la provincia",
+                    "postalCode": "Código postal",
+                    "postalCodePlaceholder": "Introduce el código postal",
+                    "country": "País",
+                    "countryPlaceholder": "Selecciona un país"
+                },
+                "save": "Guardar cambios",
+                "saved": "Cambios guardados"
+            },
+            "account": {
+                "title": "Account",
+                "description": "Manage your personal information.",
+                "name": "Name",
+                "namePlaceholder": "Enter your name",
+                "email": "Email",
+                "emailPlaceholder": "Enter your email",
+                "save": "Save changes"
+            },
+            "security": {
+                "title": "Security",
+                "description": "Manage your account security.",
+                "changePassword": "Change password"
+            },
+            "danger": {
+                "title": "Danger zone",
+                "description": "Actions in this section may permanently affect your account.",
+                "delete": "Delete account"
+            }
+        }
+    }
+}

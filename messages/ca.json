@@ -1,0 +1,357 @@
+{
+    "home": {
+        "header": {
+            "features": "Funcionalitats",
+            "howItWorks": "Com funciona",
+            "pricing": "Preus",
+            "login": "Iniciar sessió",
+            "register": "Crear compte"
+        },
+        "hero": {
+            "badge": "✨ Gestiona les teves reserves de manera senzilla",
+            "title": "Deixa de perdre temps",
+            "titleHighlight": "gestionant reserves",
+            "description": "Crea la teva pàgina de reserves, comparteix l'enllaç amb els teus clients i deixa que reservin quan vulguin. Tot organitzat en un sol lloc.",
+            "register": "Crear compte gratuït",
+            "discover": "Descobreix com funciona",
+            "note": "Sense targeta de crèdit · Configuració en minuts",
+            "noCreditCard": "No necessites targeta de crèdit",
+            "setup": "Configura-ho en pocs minuts"
+        },
+        "dashboard": {
+            "dashboard": "Panell",
+            "bookings": "Reserves",
+            "services": "Serveis",
+            "availability": "Disponibilitat",
+            "bookingsCount": "Reserves",
+            "customers": "Clients",
+            "upcoming": "Properes"
+        },
+        "features": {
+            "eyebrow": "Tot el que necessites",
+            "title": "Una plataforma per gestionar el teu negoci",
+            "description": "Automatitza les reserves i dedica el teu temps als teus clients",
+            "items": {
+                "onlineBookings": {
+                    "title": "Reserves online",
+                    "description": "Permet que els teus clients reservin cites online les 24 hores del dia, sense trucades ni missatges."
+                },
+                "availability": {
+                    "title": "Disponibilitat",
+                    "description": "Defineix els teus horaris disponibles i evita automàticament les reserves fora d'horari."
+                },
+                "bookingPage": {
+                    "title": "Pàgina de reserves",
+                    "description": "Obté una pàgina pública que pots compartir amb els teus clients o afegir al teu web."
+                },
+                "customers": {
+                    "title": "Gestió de clients",
+                    "description": "Mantén els teus clients organitzats i consulta fàcilment el seu historial de reserves."
+                },
+                "calendar": {
+                    "title": "Calendari",
+                    "description": "Visualitza les teves properes reserves en un calendari clar i fàcil d'utilitzar."
+                },
+                "payments": {
+                    "title": "Pagaments online",
+                    "description": "Cobra pels teus serveis directament durant el procés de reserva."
+                }
+            }
+        },
+        "howItWorks": {
+            "title": "Comença en pocs minuts",
+            "description": "Sense configuracions complicades",
+            "steps": {
+                "createAccount": {
+                    "title": "Crea el teu compte",
+                    "description": "Registra la teva organització i configura la informació bàsica del teu negoci."
+                },
+                "configureServices": {
+                    "title": "Configura els teus serveis",
+                    "description": "Crea els teus tipus de reserva, durada, horaris i disponibilitat."
+                },
+                "shareLink": {
+                    "title": "Comparteix el teu enllaç",
+                    "description": "Envia la teva pàgina de reserves als teus clients i comença a rebre cites."
+                }
+            }
+        },
+        "pricing": {
+            "eyebrow": "Preus senzills",
+            "title": "Tria el pla que millor s'adapta al teu negoci",
+            "description": "Comença gratis i millora el teu pla quan ho necessitis.",
+            "mostPopular": "Més popular",
+            "perMonth": "/ mes",
+            "startFree": "Començar gratis",
+            "startNow": "Començar ara"
+        },
+        "cta": {
+            "title": "Comença a rebre reserves avui",
+            "description": "Crea el teu compte i configura el teu sistema de reserves en qüestió de minuts.",
+            "button": "Crear compte gratuït"
+        },
+        "footer": {
+            "copyright": "© 2026 Booking. Tots els drets reservats.",
+            "privacy": "Privacitat",
+            "terms": "Termes i condicions"
+        }
+    },
+    "register": {
+        "title": "Crea el teu compte",
+        "description": "Crea el teu compte i la teva organització per començar.",
+        "form": {
+            "name": {
+                "label": "El teu nom",
+                "placeholder": "Joan García"
+            },
+            "email": {
+                "label": "Correu electrònic",
+                "placeholder": "tu@exemple.com"
+            },
+            "organization": {
+                "label": "Nom de l'organització",
+                "placeholder": "La teva empresa",
+                "checking": "Comprovant la disponibilitat...",
+                "exists": "Aquest nom d'organització ja està ocupat.",
+                "available": "Aquest nom d'organització està disponible.",
+                "checkError": "No s'ha pogut comprovar la disponibilitat de l'organització."
+            },
+            "timezone": {
+                "label": "Zona horària",
+                "hint": "Aquesta zona horària s'utilitzarà per calcular correctament els horaris de les teves reserves."
+            },
+            "password": {
+                "label": "Contrasenya",
+                "placeholder": "••••••••",
+                "hint": "Com a mínim 8 caràcters"
+            },
+            "passwordConfirmation": {
+                "label": "Confirma la contrasenya",
+                "placeholder": "••••••••"
+            }
+        },
+        "submit": {
+            "default": "Crear compte",
+            "loading": "Creant el compte..."
+        },
+        "errors": {
+            "passwordMismatch": "Les contrasenyes no coincideixen.",
+            "apiNotConfigured": "NEXT_PUBLIC_API_URL no està configurada.",
+            "organizationExists": "Aquest nom d'organització ja està ocupat.",
+            "default": "No s'ha pogut crear el teu compte."
+        },
+        "login": {
+            "question": "Ja tens un compte?",
+            "link": "Inicia sessió"
+        },
+        "terms": "En crear un compte, acceptes els nostres termes i condicions."
+    },
+    "login": {
+        "title": "Benvingut de nou",
+        "subtitle": "Inicia sessió al teu compte per continuar.",
+        "continueWithGoogle": "Continua amb Google",
+        "or": "o",
+        "email": "Correu electrònic",
+        "emailPlaceholder": "tu@exemple.com",
+        "password": "Contrasenya",
+        "passwordPlaceholder": "••••••••",
+        "forgotPassword": "Has oblidat la contrasenya?",
+        "submit": "Iniciar sessió",
+        "noAccount": "No tens un compte?",
+        "createAccount": "Crear compte",
+        "termsPrefix": "En iniciar sessió, acceptes els nostres",
+        "terms": "Termes",
+        "and": "i la",
+        "privacy": "Política de privacitat",
+        "loading": "Iniciant sessió..."
+    },
+    "dashboard": {
+        "account": {
+            "logout": "Tancar sessió"
+        },
+        "title": "Tauler",
+        "subtitle": "Gestiona les teves reserves i la teva organització.",
+        "stats": {
+            "upcomingBookings": "Properes reserves",
+            "eventTypes": "Tipus d'esdeveniment",
+            "customers": "Clients",
+            "teamMembers": "Membres de l'equip"
+        },
+        "header": {
+            "title": "Tauler",
+            "account": "Compte"
+        },
+        "sidebar": {
+            "dashboard": "Tauler",
+            "calendar": "Calendari",
+            "bookings": "Reserves",
+            "eventTypes": "Tipus d'esdeveniment",
+            "availability": "Disponibilitat",
+            "customers": "Clients",
+            "team": "Equip",
+            "settings": "Configuració"
+        },
+        "calendar": {
+            "title": "Calendari",
+            "subtitle": "Gestiona les teves reserves i disponibilitat.",
+            "createBooking": "Crear reserva",
+            "today": "Avui",
+            "previous": "Anterior",
+            "next": "Següent",
+            "currentMonth": "Agost 2026",
+            "month": "Mes",
+            "week": "Setmana",
+            "day": "Dia",
+            "empty": {
+                "title": "Encara no hi ha reserves",
+                "description": "Les teves reserves apareixeran aquí."
+            }
+        },
+        "bookings": {
+            "title": "Reserves",
+            "subtitle": "Gestiona i consulta totes les teves reserves.",
+            "createBooking": "Crear reserva",
+            "search": "Cercar reserves...",
+            "filters": {
+                "all": "Totes",
+                "upcoming": "Properes",
+                "past": "Passades"
+            },
+            "table": {
+                "customer": "Client",
+                "event": "Esdeveniment",
+                "date": "Data",
+                "status": "Estat",
+                "actions": "Accions"
+            },
+            "empty": {
+                "title": "No hi ha reserves",
+                "description": "Les reserves apareixeran aquí quan els teus clients en facin una."
+            }
+        },
+        "eventTypes": {
+            "title": "Tipus d'esdeveniment",
+            "subtitle": "Crea i gestiona els tipus de reserva que ofereixes.",
+            "create": "Crear tipus d'esdeveniment",
+            "empty": {
+                "title": "No hi ha tipus d'esdeveniment",
+                "description": "Crea el teu primer tipus d'esdeveniment per començar a rebre reserves.",
+                "action": "Crear tipus d'esdeveniment"
+            }
+        },
+        "availability": {
+            "title": "Disponibilitat",
+            "subtitle": "Configura quan estàs disponible per rebre reserves.",
+            "weekly": {
+                "title": "Horari setmanal",
+                "subtitle": "Defineix el teu horari habitual de disponibilitat."
+            },
+            "exceptions": {
+                "title": "Excepcions",
+                "subtitle": "Afegeix dies en què la teva disponibilitat sigui diferent.",
+                "empty": "No hi ha excepcions configurades."
+            },
+            "days": {
+                "monday": "Dilluns",
+                "tuesday": "Dimarts",
+                "wednesday": "Dimecres",
+                "thursday": "Dijous",
+                "friday": "Divendres",
+                "saturday": "Dissabte",
+                "sunday": "Diumenge"
+            },
+            "closed": "Tancat",
+            "actions": {
+                "add": "Afegir horari",
+                "edit": "Editar",
+                "addException": "Afegir excepció"
+            }
+        },
+        "customers": {
+            "title": "Clients",
+            "subtitle": "Gestiona els clients de la teva organització.",
+            "list": {
+                "title": "Clients",
+                "subtitle": "Consulta i gestiona els teus clients.",
+                "columns": {
+                    "name": "Nom",
+                    "email": "Email",
+                    "phone": "Telèfon",
+                    "bookings": "Reserves",
+                    "createdAt": "Creat"
+                }
+            },
+            "actions": {
+                "add": "Afegir client"
+            },
+            "empty": {
+                "title": "Encara no hi ha clients",
+                "description": "Els clients apareixeran aquí quan facin una reserva."
+            }
+        },
+        "settings": {
+            "title": "Configuració",
+            "subtitle": "Gestiona la teva organització, compte i preferències.",
+            "organization": {
+                "title": "Organització",
+                "description": "Configura la informació principal de la teva organització.",
+                "name": "Nom de l'organització",
+                "namePlaceholder": "Introdueix el nom de l'organització",
+                "timezone": "Zona horària",
+                "business": {
+                    "title": "Informació empresarial",
+                    "description": "Aquesta informació s'utilitzarà per a la facturació i la configuració dels pagaments.",
+                    "legalName": "Nom legal de l'empresa",
+                    "legalNamePlaceholder": "Introdueix el nom legal de l'empresa",
+                    "taxId": "NIF",
+                    "taxIdPlaceholder": "Introdueix el NIF",
+                    "businessType": "Tipus d'empresa",
+                    "phoneNumber": "Telèfon",
+                    "phoneNumberPlaceholder": "Introdueix el número de telèfon",
+                    "types": {
+                        "company": "Empresa",
+                        "individual": "Autònom / Persona física",
+                        "nonProfit": "Organització sense ànim de lucre"
+                    }
+                },
+                "address": {
+                    "title": "Adreça",
+                    "description": "Adreça legal o fiscal de l'organització.",
+                    "street": "Adreça",
+                    "streetPlaceholder": "Carrer, número i porta",
+                    "unit": "Pis, porta o altres",
+                    "unitPlaceholder": "Pis, porta, oficina...",
+                    "city": "Ciutat",
+                    "cityPlaceholder": "Barcelona",
+                    "province": "Província",
+                    "provincePlaceholder": "Barcelona",
+                    "postalCode": "Codi postal",
+                    "postalCodePlaceholder": "08001",
+                    "country": "País",
+                    "countryPlaceholder": "Selecciona un país"
+                },
+                "save": "Desar canvis",
+                "saved": "Canvis desats"
+            },
+            "account": {
+                "title": "Compte",
+                "description": "Gestiona la teva informació personal.",
+                "name": "Nom",
+                "namePlaceholder": "Introdueix el teu nom",
+                "email": "Correu electrònic",
+                "emailPlaceholder": "Introdueix el teu correu electrònic",
+                "save": "Desar canvis"
+            },
+            "security": {
+                "title": "Seguretat",
+                "description": "Gestiona la seguretat del teu compte.",
+                "changePassword": "Canviar contrasenya"
+            },
+            "danger": {
+                "title": "Zona perillosa",
+                "description": "Les accions d'aquesta secció poden afectar permanentment el teu compte.",
+                "delete": "Eliminar compte"
+            }
+        }
+    }
+}

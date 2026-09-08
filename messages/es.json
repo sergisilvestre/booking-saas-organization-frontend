@@ -1,0 +1,352 @@
+{
+    "home": {
+        "header": {
+            "features": "Funcionalidades",
+            "howItWorks": "Cómo funciona",
+            "pricing": "Precios",
+            "login": "Iniciar sesión",
+            "register": "Crear cuenta"
+        },
+        "hero": {
+            "badge": "✨ Gestiona tus reservas de forma sencilla",
+            "title": "Deja de perder tiempo",
+            "titleHighlight": "gestionando reservas",
+            "description": "Crea tu página de reservas, comparte tu enlace con tus clientes y deja que ellos reserven cuando quieran. Todo organizado en un solo lugar.",
+            "register": "Crear cuenta gratis",
+            "discover": "Descubre cómo funciona",
+            "note": "Sin tarjeta de crédito · Configuración en minutos",
+            "noCreditCard": "No necesitas tarjeta de crédito",
+            "setup": "Configúralo en pocos minutos"
+        },
+        "dashboard": {
+            "dashboard": "Dashboard",
+            "bookings": "Reservas",
+            "services": "Servicios",
+            "availability": "Disponibilidad",
+            "bookingsCount": "Reservas",
+            "customers": "Clientes",
+            "upcoming": "Próximas"
+        },
+        "features": {
+            "eyebrow": "Todo lo que necesitas",
+            "title": "Una plataforma para gestionar tu negocio",
+            "description": "Automatiza tus reservas y dedica tu tiempo a tus clientes.",
+            "items": {
+                "onlineBookings": {
+                    "title": "Reservas online",
+                    "description": "Permite que tus clientes reserven citas online las 24 horas, los 7 días de la semana, sin llamadas ni mensajes."
+                },
+                "availability": {
+                    "title": "Disponibilidad",
+                    "description": "Configura tus horarios disponibles y evita automáticamente las reservas fuera de tu horario."
+                },
+                "bookingPage": {
+                    "title": "Página de reservas",
+                    "description": "Obtén una página pública de reservas que puedes compartir con tus clientes o añadir a tu sitio web."
+                },
+                "customers": {
+                    "title": "Gestión de clientes",
+                    "description": "Mantén a tus clientes organizados y consulta fácilmente su historial de reservas."
+                },
+                "calendar": {
+                    "title": "Calendario",
+                    "description": "Consulta tus próximas reservas en un calendario claro y fácil de usar."
+                },
+                "payments": {
+                    "title": "Pagos online",
+                    "description": "Cobra tus servicios directamente durante el proceso de reserva."
+                }
+            }
+        },
+        "howItWorks": {
+            "title": "Empieza en pocos minutos",
+            "description": "Sin configuraciones complicadas",
+            "steps": {
+                "createAccount": {
+                    "title": "Crea tu cuenta",
+                    "description": "Registra tu organización y configura la información básica de tu negocio."
+                },
+                "configureServices": {
+                    "title": "Configura tus servicios",
+                    "description": "Crea tus tipos de reserva, duración, horarios y disponibilidad."
+                },
+                "shareLink": {
+                    "title": "Comparte tu enlace",
+                    "description": "Envía tu página de reservas a tus clientes y empieza a recibir citas."
+                }
+            }
+        },
+        "pricing": {
+            "eyebrow": "Precios sencillos",
+            "title": "Elige el plan que mejor se adapta a tu negocio",
+            "description": "Empieza gratis y mejora tu plan cuando lo necesites.",
+            "mostPopular": "Más popular",
+            "perMonth": "/ mes",
+            "startFree": "Empezar gratis",
+            "startNow": "Empezar ahora"
+        },
+        "cta": {
+            "title": "Empieza a recibir reservas hoy",
+            "description": "Crea tu cuenta y configura tu sistema de reservas en cuestión de minutos.",
+            "button": "Crear cuenta gratis"
+        },
+        "footer": {
+            "copyright": "© 2026 Booking. Todos los derechos reservados.",
+            "privacy": "Privacidad",
+            "terms": "Términos"
+        }
+    },
+    "register": {
+        "title": "Crea tu cuenta",
+        "description": "Crea tu cuenta y tu organización para empezar.",
+        "form": {
+            "name": {
+                "label": "Tu nombre",
+                "placeholder": "Juan García"
+            },
+            "email": {
+                "label": "Correo electrónico",
+                "placeholder": "tu@ejemplo.com"
+            },
+            "organization": {
+                "label": "Nombre de la organización",
+                "placeholder": "Tu empresa"
+            },
+            "timezone": {
+                "label": "Timezone",
+                "hint": "S'utilitzarà per calcular correctament els horaris de les teves reserves."
+            },
+            "password": {
+                "label": "Contraseña",
+                "placeholder": "••••••••",
+                "hint": "Al menos 8 caracteres"
+            },
+            "passwordConfirmation": {
+                "label": "Confirma la contraseña",
+                "placeholder": "••••••••"
+            }
+        },
+        "submit": {
+            "default": "Crear cuenta",
+            "loading": "Creando cuenta..."
+        },
+        "errors": {
+            "passwordMismatch": "Las contraseñas no coinciden.",
+            "apiNotConfigured": "NEXT_PUBLIC_API_URL no está configurada.",
+            "default": "No se ha podido crear la cuenta."
+        },
+        "login": {
+            "question": "¿Ya tienes una cuenta?",
+            "link": "Iniciar sesión"
+        },
+        "terms": "Al crear una cuenta, aceptas nuestros términos y condiciones."
+    },
+    "login": {
+        "title": "Bienvenido de nuevo",
+        "subtitle": "Inicia sesión en tu cuenta para continuar.",
+        "continueWithGoogle": "Continuar con Google",
+        "or": "o",
+        "email": "Correo electrónico",
+        "emailPlaceholder": "tu@ejemplo.com",
+        "password": "Contraseña",
+        "passwordPlaceholder": "••••••••",
+        "forgotPassword": "¿Has olvidado tu contraseña?",
+        "submit": "Iniciar sesión",
+        "noAccount": "¿No tienes una cuenta?",
+        "createAccount": "Crear cuenta",
+        "termsPrefix": "Al iniciar sesión, aceptas nuestros",
+        "terms": "Términos",
+        "and": "y la",
+        "privacy": "Política de privacidad",
+        "loading": "Iniciando sesión..."
+    },
+    "dashboard": {
+        "account": {
+            "logout": "Cerrar sesión"
+        },
+        "title": "Panel",
+        "subtitle": "Gestiona tus reservas y tu organización.",
+        "stats": {
+            "upcomingBookings": "Próximas reservas",
+            "eventTypes": "Tipos de evento",
+            "customers": "Clientes",
+            "teamMembers": "Miembros del equipo"
+        },
+        "header": {
+            "title": "Panel",
+            "account": "Cuenta"
+        },
+        "sidebar": {
+            "dashboard": "Panel",
+            "calendar": "Calendario",
+            "bookings": "Reservas",
+            "eventTypes": "Tipos de evento",
+            "availability": "Disponibilidad",
+            "customers": "Clientes",
+            "team": "Equipo",
+            "settings": "Configuración"
+        },
+        "calendar": {
+            "title": "Calendario",
+            "subtitle": "Gestiona tus reservas y disponibilidad.",
+            "createBooking": "Crear reserva",
+            "today": "Hoy",
+            "previous": "Anterior",
+            "next": "Siguiente",
+            "currentMonth": "Agosto 2026",
+            "month": "Mes",
+            "week": "Semana",
+            "day": "Día",
+            "empty": {
+                "title": "Aún no hay reservas",
+                "description": "Tus reservas aparecerán aquí."
+            }
+        },
+        "bookings": {
+            "title": "Reservas",
+            "subtitle": "Gestiona y consulta todas tus reservas.",
+            "createBooking": "Crear reserva",
+            "search": "Buscar reservas...",
+            "filters": {
+                "all": "Todas",
+                "upcoming": "Próximas",
+                "past": "Pasadas"
+            },
+            "table": {
+                "customer": "Cliente",
+                "event": "Evento",
+                "date": "Fecha",
+                "status": "Estado",
+                "actions": "Acciones"
+            },
+            "empty": {
+                "title": "No hay reservas",
+                "description": "Las reservas aparecerán aquí cuando tus clientes hagan una."
+            }
+        },
+        "eventTypes": {
+            "title": "Tipos de evento",
+            "subtitle": "Crea y gestiona los tipos de reserva que ofreces.",
+            "create": "Crear tipo de evento",
+            "empty": {
+                "title": "No hay tipos de evento",
+                "description": "Crea tu primer tipo de evento para empezar a recibir reservas.",
+                "action": "Crear tipo de evento"
+            }
+        },
+        "availability": {
+            "title": "Disponibilidad",
+            "subtitle": "Configura cuándo estás disponible para recibir reservas.",
+            "weekly": {
+                "title": "Horario semanal",
+                "subtitle": "Define tu horario habitual de disponibilidad."
+            },
+            "exceptions": {
+                "title": "Excepciones",
+                "subtitle": "Añade días en los que tu disponibilidad sea diferente.",
+                "empty": "No hay excepciones configuradas."
+            },
+            "days": {
+                "monday": "Lunes",
+                "tuesday": "Martes",
+                "wednesday": "Miércoles",
+                "thursday": "Jueves",
+                "friday": "Viernes",
+                "saturday": "Sábado",
+                "sunday": "Domingo"
+            },
+            "closed": "Cerrado",
+            "actions": {
+                "add": "Añadir horario",
+                "edit": "Editar",
+                "addException": "Añadir excepción"
+            }
+        },
+        "customers": {
+            "title": "Clientes",
+            "subtitle": "Gestiona los clientes de tu organización.",
+            "list": {
+                "title": "Clientes",
+                "subtitle": "Consulta y gestiona tus clientes.",
+                "columns": {
+                    "name": "Nombre",
+                    "email": "Email",
+                    "phone": "Teléfono",
+                    "bookings": "Reservas",
+                    "createdAt": "Creado"
+                }
+            },
+            "actions": {
+                "add": "Añadir cliente"
+            },
+            "empty": {
+                "title": "No hay clientes todavía",
+                "description": "Los clientes aparecerán aquí cuando realicen una reserva."
+            }
+        },
+        "settings": {
+            "title": "Configuración",
+            "subtitle": "Gestiona tu organización, cuenta y preferencias.",
+            "organization": {
+                "title": "Organización",
+                "description": "Configura la información principal de tu organización.",
+                "name": "Nombre de la organización",
+                "namePlaceholder": "Introduce el nombre de la organización",
+                "timezone": "Zona horaria",
+                "business": {
+                    "title": "Información empresarial",
+                    "description": "Esta información se utilizará para la facturación y la configuración de los pagos.",
+                    "legalName": "Nombre legal de la empresa",
+                    "legalNamePlaceholder": "Introduce el nombre legal de la empresa",
+                    "taxId": "NIF",
+                    "taxIdPlaceholder": "Introduce el NIF",
+                    "businessType": "Tipo de empresa",
+                    "phoneNumber": "Teléfono",
+                    "phoneNumberPlaceholder": "Introduce el número de teléfono",
+                    "types": {
+                        "company": "Empresa",
+                        "individual": "Autónomo / Persona física",
+                        "nonProfit": "Organización sin ánimo de lucro"
+                    }
+                },
+                "address": {
+                    "title": "Dirección",
+                    "description": "Dirección legal o fiscal de la organización.",
+                    "street": "Dirección",
+                    "streetPlaceholder": "Calle, número y puerta",
+                    "unit": "Piso, puerta u otros",
+                    "unitPlaceholder": "Piso, puerta, oficina...",
+                    "city": "Ciudad",
+                    "cityPlaceholder": "Barcelona",
+                    "province": "Provincia",
+                    "provincePlaceholder": "Barcelona",
+                    "postalCode": "Código postal",
+                    "postalCodePlaceholder": "08001",
+                    "country": "País",
+                    "countryPlaceholder": "Selecciona un país"
+                },
+                "save": "Guardar cambios",
+                "saved": "Cambios guardados"
+            },
+            "account": {
+                "title": "Cuenta",
+                "description": "Gestiona tu información personal.",
+                "name": "Nombre",
+                "namePlaceholder": "Introduce tu nombre",
+                "email": "Email",
+                "emailPlaceholder": "Introduce tu email",
+                "save": "Guardar cambios"
+            },
+            "security": {
+                "title": "Seguridad",
+                "description": "Gestiona la seguridad de tu cuenta.",
+                "changePassword": "Cambiar contraseña"
+            },
+            "danger": {
+                "title": "Zona peligrosa",
+                "description": "Las acciones de esta sección pueden afectar permanentemente a tu cuenta.",
+                "delete": "Eliminar cuenta"
+            }
+        }
+    }
+}

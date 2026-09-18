@@ -33,7 +33,7 @@ export default function LoginForm({ lang }: Props) {
         }
 
         try {
-            const response = await fetch(`${apiUrl}/api/auth/organitzation/login`, {
+            const response = await fetch(`${apiUrl}/api/auth/organization/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

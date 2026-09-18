@@ -1,14 +1,8 @@
 "use client";
 
-import {
-    useEffect,
-    useState,
-    type ChangeEvent,
-    type FormEvent,
-} from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import TimezoneField from "@/components/TimezoneField";
 
 type Props = {
     lang: string;
@@ -18,85 +12,16 @@ export default function RegisterForm({ lang }: Props) {
     const t = useTranslations("register");
     const router = useRouter();
 
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
     const [form, setForm] = useState({
         name: "",
         email: "",
-        organization: "",
         password: "",
         passwordConfirmation: "",
-        timezone: timezone,
     });
 
     const [loading, setLoading] = useState(false);
+    const [googleLoading, setGoogleLoading] = useState(false);
     const [error, setError] = useState("");
-
-    const [checkingOrganization, setCheckingOrganization] = useState(false);
-    const [organizationExists, setOrganizationExists] = useState<
-        boolean | null
-    >(null);
-
-    /*
-     * Check organization availability
-     */
-    useEffect(() => {
-        const organization = form.organization.trim();
-
-        const slug = organization
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/^-+|-+$/g, "");
-
-        if (!slug) {
-            setOrganizationExists(null);
-            setCheckingOrganization(false);
-            return;
-        }
-
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-        if (!apiUrl) {
-            setOrganizationExists(null);
-            setCheckingOrganization(false);
-            return;
-        }
-
-        const timeout = setTimeout(async () => {
-            try {
-                setCheckingOrganization(true);
-                setOrganizationExists(null);
-
-                const response = await fetch(
-                    `${apiUrl}/api/public/organizations/check-slug?slug=${encodeURIComponent(
-                        slug
-                    )}`,
-                    {
-                        method: "GET",
-                        headers: {
-                            Accept: "application/json",
-                        },
-                    }
-                );
-
-                if (!response.ok) {
-                    throw new Error("Failed to check organization");
-                }
-
-                const data: { exists: boolean } = await response.json();
-
-                setOrganizationExists(data.exists);
-            } catch {
-                setOrganizationExists(null);
-            } finally {
-                setCheckingOrganization(false);
-            }
-        }, 400);
-
-        return () => clearTimeout(timeout);
-    }, [form.organization]);
 
     function handleChange(event: ChangeEvent<HTMLInputElement>) {
         const { name, value } = event.target;
@@ -107,30 +32,29 @@ export default function RegisterForm({ lang }: Props) {
         }));
     }
 
-    function handleTimezoneChange(timezone: string) {
-        setForm((previous) => ({
-            ...previous,
-            timezone,
-        }));
+    function handleGoogleRegister() {
+        setError("");
+
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+        if (!apiUrl) {
+            setError(t("errors.apiNotConfigured"));
+            return;
+        }
+
+        setGoogleLoading(true);
+
+        window.location.assign(
+            `${apiUrl}/api/organization/auth/google/redirect?locale=${encodeURIComponent(lang)}`
+        );
     }
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-
         setError("");
 
         if (form.password !== form.passwordConfirmation) {
             setError(t("errors.passwordMismatch"));
-            return;
-        }
-
-        if (organizationExists === true) {
-            setError(t("errors.organizationExists"));
-            return;
-        }
-
-        if (organizationExists === null) {
-            setError(t("form.organization.checkError"));
             return;
         }
 
@@ -144,7 +68,7 @@ export default function RegisterForm({ lang }: Props) {
         try {
             setLoading(true);
 
-            const response = await fetch(`${apiUrl}/api/organization/auth/register`, {
+            const response = await fetch(`${apiUrl}/api/auth/register`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -153,60 +77,61 @@ export default function RegisterForm({ lang }: Props) {
                 body: JSON.stringify({
                     name: form.name,
                     email: form.email,
-                    organization_name: form.organization,
-                    organization_slug: form.organization,
                     password: form.password,
                     password_confirmation: form.passwordConfirmation,
-                    organization_timezone: form.timezone,
                     locale: lang,
                 }),
             });
 
-            const contentType = response.headers.get("content-type");
-
-            const data = contentType?.includes("application/json")
+            const data = response.headers
+                .get("content-type")
+                ?.includes("application/json")
                 ? await response.json()
                 : null;
 
             if (!response.ok) {
-                throw new Error(
-                    data?.message || t("errors.default")
-                );
+                throw new Error(data?.message || t("errors.default"));
             }
 
-            if (data?.token) {
-                localStorage.setItem("token", data.token);
-            }
+            localStorage.setItem("token", data.token);
 
-            router.push(`/${lang}/login`);
+            // Organization creation happens after account registration.
+            router.push(`/${lang}/profile/organization`);
         } catch (err) {
-            if (err instanceof Error) {
-                setError(err.message);
-            } else {
-                setError(t("errors.default"));
-            }
+            setError(err instanceof Error ? err.message : t("errors.default"));
         } finally {
             setLoading(false);
         }
     }
 
-    const organizationHasValue =
-        form.organization.trim().length > 0;
-
     return (
-        <form
-            onSubmit={handleSubmit}
-            className="mt-8 space-y-5"
-        >
-            {/* Name */}
+        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            <button
+                type="button"
+                onClick={handleGoogleRegister}
+                disabled={googleLoading || loading}
+                className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+                <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+                    <path fill="#4285F4" d="M21.8 12.2c0-.7-.1-1.3-.2-1.9H12v3.6h5.5a4.7 4.7 0 0 1-2 3.1v2.3h3.2c1.9-1.8 3.1-4.3 3.1-7.1Z" />
+                    <path fill="#34A853" d="M12 22c2.7 0 5-.9 6.7-2.5l-3.2-2.3c-.9.6-2 .9-3.5.9-2.7 0-5-1.8-5.8-4.3H2.9v2.4A10 10 0 0 0 12 22Z" />
+                    <path fill="#FBBC05" d="M6.2 13.8a6 6 0 0 1 0-3.7V7.7H2.9a10 10 0 0 0 0 8.6l3.3-2.5Z" />
+                    <path fill="#EA4335" d="M12 5.9c1.5 0 2.9.5 3.9 1.5l2.9-2.9C17 2.8 14.7 2 12 2a10 10 0 0 0-9.1 5.7l3.3 2.4C7 7.7 9.3 5.9 12 5.9Z" />
+                </svg>
+
+                {googleLoading ? "Redirecting to Google…" : "Continue with Google"}
+            </button>
+
+            <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-gray-200" />
+                <span className="text-xs text-gray-400">or</span>
+                <div className="h-px flex-1 bg-gray-200" />
+            </div>
+
             <div>
-                <label
-                    htmlFor="name"
-                    className="mb-2 block text-sm font-medium text-gray-700"
-                >
+                <label htmlFor="name" className="mb-2 block text-sm font-medium text-gray-700">
                     {t("form.name.label")}
                 </label>
-
                 <input
                     id="name"
                     name="name"
@@ -216,19 +141,14 @@ export default function RegisterForm({ lang }: Props) {
                     onChange={handleChange}
                     placeholder={t("form.name.placeholder")}
                     required
-                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
                 />
             </div>
 
-            {/* Email */}
             <div>
-                <label
-                    htmlFor="email"
-                    className="mb-2 block text-sm font-medium text-gray-700"
-                >
+                <label htmlFor="email" className="mb-2 block text-sm font-medium text-gray-700">
                     {t("form.email.label")}
                 </label>
-
                 <input
                     id="email"
                     name="email"
@@ -238,67 +158,14 @@ export default function RegisterForm({ lang }: Props) {
                     onChange={handleChange}
                     placeholder={t("form.email.placeholder")}
                     required
-                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
                 />
             </div>
 
-            {/* Organization */}
             <div>
-                <label
-                    htmlFor="organization"
-                    className="mb-2 block text-sm font-medium text-gray-700"
-                >
-                    {t("form.organization.label")}
-                </label>
-
-                <input
-                    id="organization"
-                    name="organization"
-                    type="text"
-                    value={form.organization}
-                    onChange={handleChange}
-                    placeholder={t("form.organization.placeholder")}
-                    required
-                    className={`w-full rounded-xl border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:ring-1 ${organizationExists === true
-                        ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                        : organizationExists === false
-                            ? "border-green-500 focus:border-green-500 focus:ring-green-500"
-                            : "border-gray-300 focus:border-gray-900 focus:ring-gray-900"
-                        }`}
-                />
-
-                {checkingOrganization && (
-                    <p className="mt-2 text-xs text-gray-400">
-                        {t("form.organization.checking")}
-                    </p>
-                )}
-
-                {!checkingOrganization &&
-                    organizationHasValue &&
-                    organizationExists === true && (
-                        <p className="mt-2 text-xs text-red-600">
-                            {t("form.organization.exists")}
-                        </p>
-                    )}
-
-                {!checkingOrganization &&
-                    organizationHasValue &&
-                    organizationExists === false && (
-                        <p className="mt-2 text-xs text-green-600">
-                            {t("form.organization.available")}
-                        </p>
-                    )}
-            </div>
-
-            {/* Password */}
-            <div>
-                <label
-                    htmlFor="password"
-                    className="mb-2 block text-sm font-medium text-gray-700"
-                >
+                <label htmlFor="password" className="mb-2 block text-sm font-medium text-gray-700">
                     {t("form.password.label")}
                 </label>
-
                 <input
                     id="password"
                     name="password"
@@ -309,23 +176,14 @@ export default function RegisterForm({ lang }: Props) {
                     placeholder={t("form.password.placeholder")}
                     required
                     minLength={8}
-                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
                 />
-
-                <p className="mt-2 text-xs text-gray-400">
-                    {t("form.password.hint")}
-                </p>
             </div>
 
-            {/* Password confirmation */}
             <div>
-                <label
-                    htmlFor="passwordConfirmation"
-                    className="mb-2 block text-sm font-medium text-gray-700"
-                >
+                <label htmlFor="passwordConfirmation" className="mb-2 block text-sm font-medium text-gray-700">
                     {t("form.passwordConfirmation.label")}
                 </label>
-
                 <input
                     id="passwordConfirmation"
                     name="passwordConfirmation"
@@ -333,39 +191,25 @@ export default function RegisterForm({ lang }: Props) {
                     autoComplete="new-password"
                     value={form.passwordConfirmation}
                     onChange={handleChange}
-                    placeholder={t(
-                        "form.passwordConfirmation.placeholder"
-                    )}
+                    placeholder={t("form.passwordConfirmation.placeholder")}
                     required
                     minLength={8}
-                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
                 />
             </div>
 
-            {/* Error */}
             {error && (
-                <div
-                    role="alert"
-                    className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
-                >
+                <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
                     {error}
                 </div>
             )}
 
-            {/* Submit */}
             <button
                 type="submit"
-                disabled={
-                    loading ||
-                    checkingOrganization ||
-                    organizationExists === true ||
-                    !form.timezone
-                }
+                disabled={loading || googleLoading}
                 className="w-full rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
-                {loading
-                    ? t("submit.loading")
-                    : t("submit.default")}
+                {loading ? t("submit.loading") : t("submit.default")}
             </button>
         </form>
     );

@@ -205,6 +205,24 @@
             "empty": {
                 "title": "Encara no hi ha reserves",
                 "description": "Les teves reserves apareixeran aquí."
+            },
+            "booking": {
+                "title": "Crear reserva",
+                "subtitle": "Afegeix una nova reserva al teu calendari.",
+                "close": "Tancar",
+                "customerName": "Nom del client",
+                "customerEmail": "Correu electrònic del client",
+                "eventType": "Tipus d'esdeveniment",
+                "selectEventType": "Selecciona un tipus d'esdeveniment",
+                "consultation": "Consulta",
+                "training": "Entrenament",
+                "meeting": "Reunió",
+                "date": "Data",
+                "startTime": "Hora d'inici",
+                "endTime": "Hora de finalització",
+                "notes": "Notes",
+                "cancel": "Cancel·lar",
+                "create": "Crear reserva"
             }
         },
         "bookings": {

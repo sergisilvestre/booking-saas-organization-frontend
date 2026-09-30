@@ -19,8 +19,6 @@ export default function GoogleCallbackPage() {
 
         hasFetched.current = true; // Bloqueamos para futuros reintentos en este montaje
 
-        console.log('code', code);
-
         const exchangeLoginCode = async () => {
             try {
                 const response = await fetch(
@@ -41,8 +39,6 @@ export default function GoogleCallbackPage() {
                 }
 
                 const data: { token: string } = await response.json();
-
-                console.log(data);
 
                 localStorage.setItem('token', data.token);
 

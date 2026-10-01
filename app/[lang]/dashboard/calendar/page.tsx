@@ -62,7 +62,7 @@ const initialCustomerForm: CustomerForm = {
 };
 
 function getAuthHeaders(): HeadersInit {
-    const token = localStorage.getItem("access_token");
+    const token = localStorage.getItem("token");
 
     return {
         "Content-Type": "application/json",
@@ -287,15 +287,57 @@ export default function CalendarPage({ lang }: Props) {
     ) {
         event.preventDefault();
 
+        const name = customerForm.name.trim();
+        const email = customerForm.email.trim();
+
+        if (!name || !email) {
+            return;
+        }
+
         try {
+            /*
+             * Check whether the customer already exists.
+             */
+            const params = new URLSearchParams({
+                name,
+                email,
+            });
+
+            const existsResponse = await fetch(
+                `${API_URL}/api/organization/customers/exists?${params.toString()}`,
+                {
+                    method: "GET",
+                    headers: getAuthHeaders(),
+                },
+            );
+
+            if (!existsResponse.ok) {
+                throw new Error(
+                    "Failed to check whether the customer already exists.",
+                );
+            }
+
+            const existsData = await existsResponse.json();
+
+            if (existsData.exists) {
+                console.error(
+                    "A customer with this name and email already exists.",
+                );
+
+                return;
+            }
+
+            /*
+             * Create the customer.
+             */
             const response = await fetch(
                 `${API_URL}/api/organization/customers`,
                 {
                     method: "POST",
                     headers: getAuthHeaders(),
                     body: JSON.stringify({
-                        name: customerForm.name,
-                        email: customerForm.email,
+                        name,
+                        email,
                     }),
                 },
             );

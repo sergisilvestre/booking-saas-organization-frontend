@@ -166,7 +166,7 @@ export default async function HomePage({
             <LanguageSwitcher currentLang={lang} />
 
             <Link
-              href={`/ ${lang}/login`}
+              href={`/${lang}/login`}
               className="hidden px-4 py-2 text-sm font-medium text-gray-700 transition hover:text-gray-900 sm:block"
             >
               {t("header.login")}

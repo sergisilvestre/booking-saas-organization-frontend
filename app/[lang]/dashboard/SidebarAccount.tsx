@@ -14,6 +14,8 @@ type User = {
     email: string;
 };
 
+const USER_STORAGE_KEY = "user";
+
 export default function SidebarAccount({ lang }: Props) {
     const router = useRouter();
 
@@ -28,20 +30,33 @@ export default function SidebarAccount({ lang }: Props) {
             const token = localStorage.getItem("token");
 
             if (!token) {
+                localStorage.removeItem(USER_STORAGE_KEY);
                 router.replace(`/${lang}/login`);
                 return;
+            }
+
+            // Load cached user immediately
+            const cachedUser = localStorage.getItem(USER_STORAGE_KEY);
+
+            if (cachedUser) {
+                try {
+                    setUser(JSON.parse(cachedUser));
+                } catch {
+                    localStorage.removeItem(USER_STORAGE_KEY);
+                }
             }
 
             const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
             if (!apiUrl) {
                 localStorage.removeItem("token");
+                localStorage.removeItem(USER_STORAGE_KEY);
                 router.replace(`/${lang}/login`);
                 return;
             }
 
             try {
-                const response = await fetch(`${apiUrl}/api/auth/me`, {
+                const response = await fetch(`${apiUrl}/api/organization/auth/me`, {
                     method: "GET",
                     headers: {
                         Accept: "application/json",
@@ -51,15 +66,24 @@ export default function SidebarAccount({ lang }: Props) {
 
                 if (!response.ok) {
                     localStorage.removeItem("token");
+                    localStorage.removeItem(USER_STORAGE_KEY);
                     router.replace(`/${lang}/login`);
                     return;
                 }
 
                 const data = await response.json();
+                const authenticatedUser: User = data.data ?? data;
 
-                setUser(data.data ?? data);
+                setUser(authenticatedUser);
+
+                // Keep the latest user data in localStorage
+                localStorage.setItem(
+                    USER_STORAGE_KEY,
+                    JSON.stringify(authenticatedUser)
+                );
             } catch {
                 localStorage.removeItem("token");
+                localStorage.removeItem(USER_STORAGE_KEY);
                 router.replace(`/${lang}/login`);
             } finally {
                 setLoading(false);
@@ -87,11 +111,13 @@ export default function SidebarAccount({ lang }: Props) {
             }
         } finally {
             localStorage.removeItem("token");
+            localStorage.removeItem(USER_STORAGE_KEY);
+
             router.replace(`/${lang}/login`);
         }
     }
 
-    if (loading) {
+    if (loading && !user) {
         return (
             <div className="border-t border-gray-200 p-4">
                 <div className="animate-pulse">

@@ -42,7 +42,7 @@ export default function LoginAuth({
             }
 
             try {
-                const response = await fetch(`${apiUrl}/api/auth/me`, {
+                const response = await fetch(`${apiUrl}/api/organization/auth/me`, {
                     method: "GET",
                     headers: {
                         Accept: "application/json",

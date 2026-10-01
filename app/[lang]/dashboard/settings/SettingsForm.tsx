@@ -1,7 +1,7 @@
 "use client";
 
 import TimezoneField from "@/components/TimezoneField";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Props = {
     translations: {
@@ -57,10 +57,136 @@ type Props = {
     };
 };
 
+type User = {
+    id: string;
+    name: string;
+    email: string;
+    stripeAccountStatus?: StripeAccountStatus;
+};
+
+type StripeAccountStatus =
+    | "not_connected"
+    | "pending"
+    | "validated"
+    | "restricted"
+    | "disabled";
+
+type OrganizationNameAvailability =
+    | "idle"
+    | "checking"
+    | "available"
+    | "unavailable";
+
+const USER_STORAGE_KEY = "user";
+
 export default function SettingsForm({
     translations: t,
 }: Props) {
     const [timezone, setTimezone] = useState("Europe/Madrid");
+    const [user, setUser] = useState<User | null>(null);
+
+    const [organizationName, setOrganizationName] = useState("");
+    const [organizationNameAvailability, setOrganizationNameAvailability] =
+        useState<OrganizationNameAvailability>("idle");
+
+    useEffect(() => {
+        const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+
+        if (!storedUser) {
+            return;
+        }
+
+        try {
+            const parsed = JSON.parse(storedUser);
+            const storedUserData: User = parsed.data ?? parsed;
+
+            if (
+                storedUserData &&
+                typeof storedUserData.name === "string" &&
+                typeof storedUserData.email === "string"
+            ) {
+                setUser(storedUserData);
+            }
+        } catch {
+            localStorage.removeItem(USER_STORAGE_KEY);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!organizationName.trim()) {
+            setOrganizationNameAvailability("idle");
+            return;
+        }
+
+        if (organizationName.trim().length < 3) {
+            setOrganizationNameAvailability("idle");
+            return;
+        }
+
+        const timeout = window.setTimeout(async () => {
+            setOrganizationNameAvailability("checking");
+
+            try {
+                const token = localStorage.getItem("token");
+
+                const apiUrl =
+                    process.env.NEXT_PUBLIC_API_URL ?? "";
+
+                const response = await fetch(
+                    `${apiUrl}/api/organization/check-name?name=${encodeURIComponent(
+                        organizationName.trim()
+                    )}`,
+                    {
+                        method: "GET",
+                        headers: {
+                            Accept: "application/json",
+                            ...(token
+                                ? {
+                                      Authorization: `Bearer ${token}`,
+                                  }
+                                : {}),
+                        },
+                    }
+                );
+
+                if (!response.ok) {
+                    setOrganizationNameAvailability("idle");
+                    return;
+                }
+
+                const data = await response.json();
+
+                const available =
+                    data.available ??
+                    data.data?.available ??
+                    false;
+
+                setOrganizationNameAvailability(
+                    available ? "available" : "unavailable"
+                );
+            } catch {
+                setOrganizationNameAvailability("idle");
+            }
+        }, 400);
+
+        return () => {
+            window.clearTimeout(timeout);
+        };
+    }, [organizationName]);
+
+    const stripeAccountStatus =
+        user?.stripeAccountStatus ?? "not_connected";
+
+    const stripeAccountValidated =
+        stripeAccountStatus === "validated";
+
+    const inputClassName = stripeAccountValidated
+        ? "w-full rounded-xl border border-gray-200 bg-gray-100 px-4 py-3 text-sm text-gray-500 outline-none cursor-not-allowed"
+        : "w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-1 focus:ring-gray-900";
+
+    const selectClassName = stripeAccountValidated
+        ? "w-full rounded-xl border border-gray-200 bg-gray-100 px-4 py-3 text-sm text-gray-500 outline-none cursor-not-allowed"
+        : "w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900";
 
     return (
         <div className="space-y-6">
@@ -91,12 +217,58 @@ export default function SettingsForm({
                                 id="organization-name"
                                 name="name"
                                 type="text"
-                                defaultValue=""
+                                value={organizationName}
+                                onChange={(event) =>
+                                    setOrganizationName(
+                                        event.target.value
+                                    )
+                                }
+                                onKeyUp={() => {
+                                    if (
+                                        !organizationName.trim()
+                                    ) {
+                                        setOrganizationNameAvailability(
+                                            "idle"
+                                        );
+                                    }
+                                }}
                                 placeholder={
                                     t.organization.namePlaceholder
                                 }
-                                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
+                                autoComplete="off"
+                                readOnly={stripeAccountValidated}
+                                className={inputClassName}
                             />
+
+                            {/* Availability */}
+                            {!stripeAccountValidated &&
+                                organizationName.trim().length >=
+                                    3 && (
+                                    <div className="mt-2 text-sm">
+                                        {organizationNameAvailability ===
+                                            "checking" && (
+                                            <span className="text-gray-500">
+                                                Checking availability...
+                                            </span>
+                                        )}
+
+                                        {organizationNameAvailability ===
+                                            "available" && (
+                                            <span className="text-green-600">
+                                                Organization name is
+                                                available.
+                                            </span>
+                                        )}
+
+                                        {organizationNameAvailability ===
+                                            "unavailable" && (
+                                            <span className="text-red-600">
+                                                Organization name is
+                                                already taken.
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
                         </div>
 
                         <TimezoneField
@@ -141,7 +313,9 @@ export default function SettingsForm({
                                         t.organization.business
                                             .legalNamePlaceholder
                                     }
-                                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
+                                    autoComplete="off"
+                                    readOnly={stripeAccountValidated}
+                                    className={inputClassName}
                                 />
                             </div>
 
@@ -151,7 +325,10 @@ export default function SettingsForm({
                                     htmlFor="tax-id"
                                     className="mb-2 block text-sm font-medium text-gray-700"
                                 >
-                                    {t.organization.business.taxId}
+                                    {
+                                        t.organization.business
+                                            .taxId
+                                    }
                                 </label>
 
                                 <input
@@ -163,7 +340,9 @@ export default function SettingsForm({
                                         t.organization.business
                                             .taxIdPlaceholder
                                     }
-                                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
+                                    autoComplete="off"
+                                    readOnly={stripeAccountValidated}
+                                    className={inputClassName}
                                 />
                             </div>
 
@@ -183,7 +362,9 @@ export default function SettingsForm({
                                     id="business-type"
                                     name="business_type"
                                     defaultValue="company"
-                                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
+                                    autoComplete="off"
+                                    disabled={stripeAccountValidated}
+                                    className={selectClassName}
                                 >
                                     <option value="company">
                                         {
@@ -229,22 +410,30 @@ export default function SettingsForm({
                                         t.organization.business
                                             .phoneNumberPlaceholder
                                     }
-                                    autoComplete="tel"
-                                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
+                                    autoComplete="off"
+                                    readOnly={stripeAccountValidated}
+                                    className={inputClassName}
                                 />
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="mt-6 flex justify-end">
-                    <button
-                        type="button"
-                        className="rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800"
-                    >
-                        {t.organization.save}
-                    </button>
-                </div>
+                {/* Save */}
+                {!stripeAccountValidated && (
+                    <div className="mt-6 flex justify-end">
+                        <button
+                            type="button"
+                            disabled={
+                                organizationNameAvailability !==
+                                "available"
+                            }
+                            className="rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {t.organization.save}
+                        </button>
+                    </div>
+                )}
             </section>
 
             {/* Account */}
@@ -260,52 +449,47 @@ export default function SettingsForm({
                 </div>
 
                 <div className="grid gap-5 md:grid-cols-2">
+                    {/* Name */}
                     <div>
                         <label
-                            htmlFor="name"
+                            htmlFor="account-name"
                             className="mb-2 block text-sm font-medium text-gray-700"
                         >
                             {t.account.name}
                         </label>
 
                         <input
-                            id="name"
-                            name="name"
+                            id="account-name"
+                            name="account_name"
                             type="text"
-                            placeholder={
-                                t.account.namePlaceholder
-                            }
-                            className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
+                            value={user?.name ?? ""}
+                            disabled
+                            placeholder={t.account.namePlaceholder}
+                            autoComplete="off"
+                            className="w-full rounded-xl border border-gray-300 bg-gray-100 px-4 py-3 text-sm text-gray-500 outline-none disabled:cursor-not-allowed"
                         />
                     </div>
 
+                    {/* Email */}
                     <div>
                         <label
-                            htmlFor="email"
+                            htmlFor="account-email"
                             className="mb-2 block text-sm font-medium text-gray-700"
                         >
                             {t.account.email}
                         </label>
 
                         <input
-                            id="email"
-                            name="email"
+                            id="account-email"
+                            name="account_email"
                             type="email"
-                            placeholder={
-                                t.account.emailPlaceholder
-                            }
-                            className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
+                            value={user?.email ?? ""}
+                            disabled
+                            placeholder={t.account.emailPlaceholder}
+                            autoComplete="off"
+                            className="w-full rounded-xl border border-gray-300 bg-gray-100 px-4 py-3 text-sm text-gray-500 outline-none disabled:cursor-not-allowed"
                         />
                     </div>
-                </div>
-
-                <div className="mt-6 flex justify-end">
-                    <button
-                        type="button"
-                        className="rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800"
-                    >
-                        {t.account.save}
-                    </button>
                 </div>
             </section>
 

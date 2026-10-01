@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid/index.js";
@@ -20,25 +20,59 @@ type CalendarView =
     | "timeGridWeek"
     | "timeGridDay";
 
+type Customer = {
+    id: string;
+    name: string;
+    email: string;
+};
+
+type EventType = {
+    id: string;
+    name: string;
+};
+
 type BookingForm = {
-    customerName: string;
-    customerEmail: string;
-    eventType: string;
+    customerId: string;
+    eventTypeId: string;
     date: string;
     startTime: string;
     endTime: string;
     notes: string;
 };
 
+type CustomerForm = {
+    name: string;
+    email: string;
+};
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 const initialForm: BookingForm = {
-    customerName: "",
-    customerEmail: "",
-    eventType: "",
+    customerId: "",
+    eventTypeId: "",
     date: "",
     startTime: "09:00",
     endTime: "09:30",
     notes: "",
 };
+
+const initialCustomerForm: CustomerForm = {
+    name: "",
+    email: "",
+};
+
+function getAuthHeaders(): HeadersInit {
+    const token = localStorage.getItem("access_token");
+
+    return {
+        "Content-Type": "application/json",
+        ...(token
+            ? {
+                Authorization: `Bearer ${token}`,
+            }
+            : {}),
+    };
+}
 
 export default function CalendarPage({ lang }: Props) {
     const t = useTranslations("dashboard.calendar");
@@ -49,8 +83,38 @@ export default function CalendarPage({ lang }: Props) {
     const [currentView, setCurrentView] =
         useState<CalendarView>("dayGridMonth");
 
-    const [isBookingFormOpen, setIsBookingFormOpen] = useState(false);
-    const [form, setForm] = useState<BookingForm>(initialForm);
+    const [isBookingFormOpen, setIsBookingFormOpen] =
+        useState(false);
+
+    const [form, setForm] =
+        useState<BookingForm>(initialForm);
+
+    /*
+     * Customers
+     */
+    const [customers, setCustomers] =
+        useState<Customer[]>([]);
+
+    const [customerSearch, setCustomerSearch] =
+        useState("");
+
+    const [selectedCustomer, setSelectedCustomer] =
+        useState<Customer | null>(null);
+
+    const [isCustomerSearchOpen, setIsCustomerSearchOpen] =
+        useState(false);
+
+    const [isCreateCustomerOpen, setIsCreateCustomerOpen] =
+        useState(false);
+
+    const [customerForm, setCustomerForm] =
+        useState<CustomerForm>(initialCustomerForm);
+
+    /*
+     * Event types
+     */
+    const [eventTypes, setEventTypes] =
+        useState<EventType[]>([]);
 
     function getCalendar(): CalendarApi | null {
         return calendarApiRef.current;
@@ -84,37 +148,24 @@ export default function CalendarPage({ lang }: Props) {
             date: date ?? getTodayDate(),
         });
 
+        setSelectedCustomer(null);
+        setCustomerSearch("");
+        setIsCustomerSearchOpen(false);
+
         setIsBookingFormOpen(true);
     }
 
     function closeBookingForm() {
         setIsBookingFormOpen(false);
+        setIsCustomerSearchOpen(false);
+        setIsCreateCustomerOpen(false);
     }
 
     function handleDateClick(info: { dateStr: string }) {
         openBookingForm(info.dateStr);
     }
 
-    function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-
-        console.log("Create booking:", form);
-
-        // TODO:
-        // POST /api/bookings
-        //
-        // await fetch("/api/bookings", {
-        //     method: "POST",
-        //     headers: {
-        //         "Content-Type": "application/json",
-        //     },
-        //     body: JSON.stringify(form),
-        // });
-
-        closeBookingForm();
-    }
-
-    function updateForm(
+    function updateBookingForm(
         field: keyof BookingForm,
         value: string,
     ) {
@@ -122,6 +173,207 @@ export default function CalendarPage({ lang }: Props) {
             ...current,
             [field]: value,
         }));
+    }
+
+    /*
+     * Load event types when the page loads.
+     */
+    useEffect(() => {
+        async function loadEventTypes() {
+            try {
+                const response = await fetch(
+                    `${API_URL}/api/organization/event-types`,
+                    {
+                        headers: getAuthHeaders(),
+                    },
+                );
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Failed to load event types.",
+                    );
+                }
+
+                const data = await response.json();
+
+                setEventTypes(data.data ?? data);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        loadEventTypes();
+    }, []);
+
+    /*
+     * Search customers.
+     *
+     * This is intentionally simple for now.
+     * Add debounce if your customer list becomes large.
+     */
+    useEffect(() => {
+        if (!isBookingFormOpen) {
+            return;
+        }
+
+        async function loadCustomers() {
+            try {
+                const params = new URLSearchParams();
+
+                if (customerSearch.trim()) {
+                    params.set(
+                        "search",
+                        customerSearch.trim(),
+                    );
+                }
+
+                const response = await fetch(
+                    `${API_URL}/api/organization/customers?${params.toString()}`,
+                    {
+                        headers: getAuthHeaders(),
+                    },
+                );
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Failed to load customers.",
+                    );
+                }
+
+                const data = await response.json();
+
+                setCustomers(data.data ?? data);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        loadCustomers();
+    }, [customerSearch, isBookingFormOpen]);
+
+    function selectCustomer(customer: Customer) {
+        setSelectedCustomer(customer);
+
+        updateBookingForm(
+            "customerId",
+            customer.id,
+        );
+
+        setCustomerSearch("");
+        setIsCustomerSearchOpen(false);
+    }
+
+    function removeCustomer() {
+        setSelectedCustomer(null);
+
+        updateBookingForm(
+            "customerId",
+            "",
+        );
+    }
+
+    function openCreateCustomer() {
+        setCustomerForm(initialCustomerForm);
+        setIsCreateCustomerOpen(true);
+        setIsCustomerSearchOpen(false);
+    }
+
+    function closeCreateCustomer() {
+        setIsCreateCustomerOpen(false);
+    }
+
+    async function handleCreateCustomer(
+        event: React.FormEvent<HTMLFormElement>,
+    ) {
+        event.preventDefault();
+
+        try {
+            const response = await fetch(
+                `${API_URL}/api/organization/customers`,
+                {
+                    method: "POST",
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({
+                        name: customerForm.name,
+                        email: customerForm.email,
+                    }),
+                },
+            );
+
+            if (!response.ok) {
+                throw new Error(
+                    "Failed to create customer.",
+                );
+            }
+
+            const data = await response.json();
+
+            const customer: Customer =
+                data.data ?? data;
+
+            /*
+             * Automatically select the newly-created
+             * customer in the booking form.
+             */
+            selectCustomer(customer);
+
+            setCustomers((current) => [
+                customer,
+                ...current,
+            ]);
+
+            closeCreateCustomer();
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    async function handleSubmit(
+        event: React.FormEvent<HTMLFormElement>,
+    ) {
+        event.preventDefault();
+
+        if (!selectedCustomer) {
+            return;
+        }
+
+        const payload = {
+            customer_id: form.customerId,
+            event_type_id: form.eventTypeId,
+            start_at: `${form.date} ${form.startTime}:00`,
+            end_at: `${form.date} ${form.endTime}:00`,
+            notes: form.notes || null,
+        };
+
+        try {
+            const response = await fetch(
+                `${API_URL}/api/organization/bookings`,
+                {
+                    method: "POST",
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(payload),
+                },
+            );
+
+            if (!response.ok) {
+                throw new Error(
+                    "Failed to create booking.",
+                );
+            }
+
+            closeBookingForm();
+
+            /*
+             * Later:
+             * refresh FullCalendar events here.
+             */
+            console.log(
+                "Booking created:",
+                payload,
+            );
+        } catch (error) {
+            console.error(error);
+        }
     }
 
     return (
@@ -149,7 +401,6 @@ export default function CalendarPage({ lang }: Props) {
 
             {/* Calendar */}
             <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:p-6">
-                {/* Toolbar */}
                 <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     {/* Navigation */}
                     <div className="flex items-center gap-2">
@@ -190,12 +441,15 @@ export default function CalendarPage({ lang }: Props) {
                         <button
                             type="button"
                             onClick={() =>
-                                changeView("dayGridMonth")
+                                changeView(
+                                    "dayGridMonth",
+                                )
                             }
-                            className={`rounded - md px - 3 py - 1.5 text - sm font - medium transition ${currentView === "dayGridMonth"
-                                    ? "bg-white text-gray-900 shadow-sm"
-                                    : "text-gray-600 hover:bg-white hover:text-gray-900"
-                                } `}
+                            className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${currentView ===
+                                "dayGridMonth"
+                                ? "bg-white text-gray-900 shadow-sm"
+                                : "text-gray-600 hover:bg-white hover:text-gray-900"
+                                }`}
                         >
                             {t("month")}
                         </button>
@@ -203,12 +457,15 @@ export default function CalendarPage({ lang }: Props) {
                         <button
                             type="button"
                             onClick={() =>
-                                changeView("timeGridWeek")
+                                changeView(
+                                    "timeGridWeek",
+                                )
                             }
-                            className={`rounded - md px - 3 py - 1.5 text - sm font - medium transition ${currentView === "timeGridWeek"
-                                    ? "bg-white text-gray-900 shadow-sm"
-                                    : "text-gray-600 hover:bg-white hover:text-gray-900"
-                                } `}
+                            className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${currentView ===
+                                "timeGridWeek"
+                                ? "bg-white text-gray-900 shadow-sm"
+                                : "text-gray-600 hover:bg-white hover:text-gray-900"
+                                }`}
                         >
                             {t("week")}
                         </button>
@@ -216,12 +473,15 @@ export default function CalendarPage({ lang }: Props) {
                         <button
                             type="button"
                             onClick={() =>
-                                changeView("timeGridDay")
+                                changeView(
+                                    "timeGridDay",
+                                )
                             }
-                            className={`rounded - md px - 3 py - 1.5 text - sm font - medium transition ${currentView === "timeGridDay"
-                                    ? "bg-white text-gray-900 shadow-sm"
-                                    : "text-gray-600 hover:bg-white hover:text-gray-900"
-                                } `}
+                            className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${currentView ===
+                                "timeGridDay"
+                                ? "bg-white text-gray-900 shadow-sm"
+                                : "text-gray-600 hover:bg-white hover:text-gray-900"
+                                }`}
                         >
                             {t("day")}
                         </button>
@@ -264,77 +524,164 @@ export default function CalendarPage({ lang }: Props) {
                             event.stopPropagation()
                         }
                     >
-                        {/* Modal header */}
+                        {/* Header */}
                         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-5">
                             <div>
                                 <h3 className="text-lg font-semibold text-gray-900">
-                                    {t("booking.title")}
+                                    {t(
+                                        "booking.title",
+                                    )}
                                 </h3>
 
                                 <p className="mt-1 text-sm text-gray-500">
-                                    {t("booking.subtitle")}
+                                    {t(
+                                        "booking.subtitle",
+                                    )}
                                 </p>
                             </div>
 
                             <button
                                 type="button"
-                                onClick={closeBookingForm}
-                                aria-label={t("booking.close")}
+                                onClick={
+                                    closeBookingForm
+                                }
+                                aria-label={t(
+                                    "booking.close",
+                                )}
                                 className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
                             >
                                 ×
                             </button>
                         </div>
 
-                        {/* Form */}
                         <form onSubmit={handleSubmit}>
                             <div className="space-y-5 px-6 py-6">
-                                {/* Customer name */}
-                                <div>
-                                    <label
-                                        htmlFor="customerName"
-                                        className="mb-1.5 block text-sm font-medium text-gray-700"
-                                    >
-                                        {t("booking.customerName")}
+                                {/* Customer */}
+                                <div className="relative">
+                                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                                        {t(
+                                            "booking.customer",
+                                        )}
                                     </label>
 
-                                    <input
-                                        id="customerName"
-                                        type="text"
-                                        value={form.customerName}
-                                        onChange={(event) =>
-                                            updateForm(
-                                                "customerName",
-                                                event.target.value,
-                                            )
-                                        }
-                                        required
-                                        className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
-                                    />
-                                </div>
+                                    {selectedCustomer ? (
+                                        <div className="flex items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2.5">
+                                            <div>
+                                                <div className="text-sm font-medium text-gray-900">
+                                                    {
+                                                        selectedCustomer.name
+                                                    }
+                                                </div>
 
-                                {/* Customer email */}
-                                <div>
-                                    <label
-                                        htmlFor="customerEmail"
-                                        className="mb-1.5 block text-sm font-medium text-gray-700"
-                                    >
-                                        {t("booking.customerEmail")}
-                                    </label>
+                                                <div className="text-xs text-gray-700">
+                                                    {
+                                                        selectedCustomer.email
+                                                    }
+                                                </div>
+                                            </div>
 
-                                    <input
-                                        id="customerEmail"
-                                        type="email"
-                                        value={form.customerEmail}
-                                        onChange={(event) =>
-                                            updateForm(
-                                                "customerEmail",
-                                                event.target.value,
-                                            )
-                                        }
-                                        required
-                                        className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
-                                    />
+                                            <button
+                                                type="button"
+                                                onClick={
+                                                    removeCustomer
+                                                }
+                                                className="text-sm text-gray-500 hover:text-gray-900"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <input
+                                                type="text"
+                                                value={
+                                                    customerSearch
+                                                }
+                                                onChange={(
+                                                    event,
+                                                ) => {
+                                                    setCustomerSearch(
+                                                        event
+                                                            .target
+                                                            .value,
+                                                    );
+
+                                                    setIsCustomerSearchOpen(
+                                                        true,
+                                                    );
+                                                }}
+                                                onFocus={() =>
+                                                    setIsCustomerSearchOpen(
+                                                        true,
+                                                    )
+                                                }
+                                                placeholder={t(
+                                                    "booking.searchCustomer",
+                                                )}
+                                                autoComplete="off"
+                                                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
+                                            />
+
+                                            {isCustomerSearchOpen && (
+                                                <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                                                    <div className="max-h-60 overflow-y-auto">
+                                                        {customers.length >
+                                                            0 ? (
+                                                            customers.map(
+                                                                (
+                                                                    customer,
+                                                                ) => (
+                                                                    <button
+                                                                        key={
+                                                                            customer.id
+                                                                        }
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            selectCustomer(
+                                                                                customer,
+                                                                            )
+                                                                        }
+                                                                        className="block w-full px-3 py-2.5 text-left transition hover:bg-gray-50"
+                                                                    >
+                                                                        <div className="text-sm font-medium text-gray-900">
+                                                                            {
+                                                                                customer.name
+                                                                            }
+                                                                        </div>
+
+                                                                        <div className="text-xs text-gray-700">
+                                                                            {
+                                                                                customer.email
+                                                                            }
+                                                                        </div>
+                                                                    </button>
+                                                                ),
+                                                            )
+                                                        ) : (
+                                                            <div className="px-3 py-3 text-sm text-gray-500">
+                                                                {t(
+                                                                    "booking.noCustomersFound",
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={
+                                                            openCreateCustomer
+                                                        }
+                                                        className="w-full border-t border-gray-200 px-3 py-2.5 text-left text-sm font-medium text-gray-900 hover:bg-gray-50"
+                                                    >
+                                                        +{" "}
+                                                        {t(
+                                                            "booking.addCustomer",
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
                                 </div>
 
                                 {/* Event type */}
@@ -343,36 +690,48 @@ export default function CalendarPage({ lang }: Props) {
                                         htmlFor="eventType"
                                         className="mb-1.5 block text-sm font-medium text-gray-700"
                                     >
-                                        {t("booking.eventType")}
+                                        {t(
+                                            "booking.eventType",
+                                        )}
                                     </label>
 
                                     <select
                                         id="eventType"
-                                        value={form.eventType}
+                                        value={
+                                            form.eventTypeId
+                                        }
                                         onChange={(event) =>
-                                            updateForm(
-                                                "eventType",
-                                                event.target.value,
+                                            updateBookingForm(
+                                                "eventTypeId",
+                                                event.target
+                                                    .value,
                                             )
                                         }
                                         required
                                         className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
                                     >
                                         <option value="">
-                                            {t("booking.selectEventType")}
+                                            {t(
+                                                "booking.selectEventType",
+                                            )}
                                         </option>
 
-                                        <option value="consultation">
-                                            {t("booking.consultation")}
-                                        </option>
-
-                                        <option value="training">
-                                            {t("booking.training")}
-                                        </option>
-
-                                        <option value="meeting">
-                                            {t("booking.meeting")}
-                                        </option>
+                                        {eventTypes.map(
+                                            (eventType) => (
+                                                <option
+                                                    key={
+                                                        eventType.id
+                                                    }
+                                                    value={
+                                                        eventType.id
+                                                    }
+                                                >
+                                                    {
+                                                        eventType.name
+                                                    }
+                                                </option>
+                                            ),
+                                        )}
                                     </select>
                                 </div>
 
@@ -382,7 +741,9 @@ export default function CalendarPage({ lang }: Props) {
                                         htmlFor="date"
                                         className="mb-1.5 block text-sm font-medium text-gray-700"
                                     >
-                                        {t("booking.date")}
+                                        {t(
+                                            "booking.date",
+                                        )}
                                     </label>
 
                                     <input
@@ -390,9 +751,10 @@ export default function CalendarPage({ lang }: Props) {
                                         type="date"
                                         value={form.date}
                                         onChange={(event) =>
-                                            updateForm(
+                                            updateBookingForm(
                                                 "date",
-                                                event.target.value,
+                                                event.target
+                                                    .value,
                                             )
                                         }
                                         required
@@ -407,17 +769,25 @@ export default function CalendarPage({ lang }: Props) {
                                             htmlFor="startTime"
                                             className="mb-1.5 block text-sm font-medium text-gray-700"
                                         >
-                                            {t("booking.startTime")}
+                                            {t(
+                                                "booking.startTime",
+                                            )}
                                         </label>
 
                                         <input
                                             id="startTime"
                                             type="time"
-                                            value={form.startTime}
-                                            onChange={(event) =>
-                                                updateForm(
+                                            value={
+                                                form.startTime
+                                            }
+                                            onChange={(
+                                                event,
+                                            ) =>
+                                                updateBookingForm(
                                                     "startTime",
-                                                    event.target.value,
+                                                    event
+                                                        .target
+                                                        .value,
                                                 )
                                             }
                                             required
@@ -430,17 +800,25 @@ export default function CalendarPage({ lang }: Props) {
                                             htmlFor="endTime"
                                             className="mb-1.5 block text-sm font-medium text-gray-700"
                                         >
-                                            {t("booking.endTime")}
+                                            {t(
+                                                "booking.endTime",
+                                            )}
                                         </label>
 
                                         <input
                                             id="endTime"
                                             type="time"
-                                            value={form.endTime}
-                                            onChange={(event) =>
-                                                updateForm(
+                                            value={
+                                                form.endTime
+                                            }
+                                            onChange={(
+                                                event,
+                                            ) =>
+                                                updateBookingForm(
                                                     "endTime",
-                                                    event.target.value,
+                                                    event
+                                                        .target
+                                                        .value,
                                                 )
                                             }
                                             required
@@ -455,7 +833,9 @@ export default function CalendarPage({ lang }: Props) {
                                         htmlFor="notes"
                                         className="mb-1.5 block text-sm font-medium text-gray-700"
                                     >
-                                        {t("booking.notes")}
+                                        {t(
+                                            "booking.notes",
+                                        )}
                                     </label>
 
                                     <textarea
@@ -463,9 +843,10 @@ export default function CalendarPage({ lang }: Props) {
                                         rows={3}
                                         value={form.notes}
                                         onChange={(event) =>
-                                            updateForm(
+                                            updateBookingForm(
                                                 "notes",
-                                                event.target.value,
+                                                event.target
+                                                    .value,
                                             )
                                         }
                                         className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
@@ -477,17 +858,153 @@ export default function CalendarPage({ lang }: Props) {
                             <div className="flex items-center justify-end gap-3 border-t border-gray-200 px-6 py-4">
                                 <button
                                     type="button"
-                                    onClick={closeBookingForm}
+                                    onClick={
+                                        closeBookingForm
+                                    }
                                     className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
                                 >
-                                    {t("booking.cancel")}
+                                    {t(
+                                        "booking.cancel",
+                                    )}
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    disabled={
+                                        !selectedCustomer ||
+                                        !form.eventTypeId
+                                    }
+                                    className="rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {t(
+                                        "booking.create",
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Create customer modal */}
+            {isCreateCustomerOpen && (
+                <div
+                    className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4"
+                    onMouseDown={closeCreateCustomer}
+                >
+                    <div
+                        className="w-full max-w-md rounded-2xl bg-white shadow-xl"
+                        onMouseDown={(event) =>
+                            event.stopPropagation()
+                        }
+                    >
+                        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-5">
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900">
+                                    {t(
+                                        "customer.createTitle",
+                                    )}
+                                </h3>
+
+                                <p className="mt-1 text-sm text-gray-500">
+                                    {t(
+                                        "customer.createSubtitle",
+                                    )}
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={
+                                    closeCreateCustomer
+                                }
+                                aria-label={t(
+                                    "customer.close",
+                                )}
+                                className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <form
+                            onSubmit={
+                                handleCreateCustomer
+                            }
+                        >
+                            <div className="space-y-5 px-6 py-6">
+                                <div>
+                                    <label
+                                        htmlFor="newCustomerName"
+                                        className="mb-1.5 block text-sm font-medium text-gray-700"
+                                    >
+                                        {t(
+                                            "customer.name",
+                                        )}
+                                    </label>
+
+                                    <input
+                                        id="newCustomerName"
+                                        type="text"
+                                        value={customerForm.name}
+                                        onChange={(event) =>
+                                            setCustomerForm((current) => ({
+                                                ...current,
+                                                name: event.target.value,
+                                            }))
+                                        }
+                                        required
+                                        autoFocus
+                                        className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label
+                                        htmlFor="newCustomerEmail"
+                                        className="mb-1.5 block text-sm font-medium text-gray-700"
+                                    >
+                                        {t(
+                                            "customer.email",
+                                        )}
+                                    </label>
+
+                                    <input
+                                        id="newCustomerEmail"
+                                        type="email"
+                                        value={customerForm.email}
+                                        onChange={(event) =>
+                                            setCustomerForm((current) => ({
+                                                ...current,
+                                                email: event.target.value,
+                                            }))
+                                        }
+                                        required
+                                        className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-3 border-t border-gray-200 px-6 py-4">
+                                <button
+                                    type="button"
+                                    onClick={
+                                        closeCreateCustomer
+                                    }
+                                    className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                                >
+                                    {t(
+                                        "customer.cancel",
+                                    )}
                                 </button>
 
                                 <button
                                     type="submit"
                                     className="rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800"
                                 >
-                                    {t("booking.create")}
+                                    {t(
+                                        "customer.create",
+                                    )}
                                 </button>
                             </div>
                         </form>
@@ -502,8 +1019,14 @@ function getTodayDate(): string {
     const date = new Date();
 
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
 
-    return `${year} -${month} -${day} `;
+    const month = String(
+        date.getMonth() + 1,
+    ).padStart(2, "0");
+
+    const day = String(
+        date.getDate(),
+    ).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
 }

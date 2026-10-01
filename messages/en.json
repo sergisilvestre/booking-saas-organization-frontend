@@ -211,19 +211,27 @@
                 "title": "Create booking",
                 "subtitle": "Add a new booking to your calendar.",
                 "close": "Close",
-                "customerName": "Customer name",
-                "customerEmail": "Customer email",
+                "customer": "Customer",
+                "searchCustomer": "Search by name or email...",
+                "noCustomersFound": "No customers found.",
+                "addCustomer": "Add new customer",
                 "eventType": "Event type",
                 "selectEventType": "Select an event type",
-                "consultation": "Consultation",
-                "training": "Training",
-                "meeting": "Meeting",
                 "date": "Date",
                 "startTime": "Start time",
                 "endTime": "End time",
                 "notes": "Notes",
                 "cancel": "Cancel",
                 "create": "Create booking"
+            },
+            "customer": {
+                "createTitle": "Add customer",
+                "createSubtitle": "Create a new customer for this booking.",
+                "close": "Close",
+                "name": "Name",
+                "email": "Email",
+                "cancel": "Cancel",
+                "create": "Add customer"
             }
         },
         "bookings": {

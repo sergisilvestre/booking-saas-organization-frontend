@@ -205,19 +205,27 @@
                 "title": "Crear reserva",
                 "subtitle": "Añade una nueva reserva a tu calendario.",
                 "close": "Cerrar",
-                "customerName": "Nombre del cliente",
-                "customerEmail": "Correo electrónico del cliente",
+                "customer": "Cliente",
+                "searchCustomer": "Busca por nombre o correo electrónico...",
+                "noCustomersFound": "No se encontraron clientes.",
+                "addCustomer": "Añadir nuevo cliente",
                 "eventType": "Tipo de evento",
                 "selectEventType": "Selecciona un tipo de evento",
-                "consultation": "Consulta",
-                "training": "Entrenamiento",
-                "meeting": "Reunión",
                 "date": "Fecha",
                 "startTime": "Hora de inicio",
                 "endTime": "Hora de finalización",
                 "notes": "Notas",
                 "cancel": "Cancelar",
                 "create": "Crear reserva"
+            },
+            "customer": {
+                "createTitle": "Añadir cliente",
+                "createSubtitle": "Crea un nuevo cliente para esta reserva.",
+                "close": "Cerrar",
+                "name": "Nombre",
+                "email": "Correo electrónico",
+                "cancel": "Cancelar",
+                "create": "Añadir cliente"
             }
         },
         "bookings": {

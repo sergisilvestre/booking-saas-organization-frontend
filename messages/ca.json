@@ -317,26 +317,28 @@
         },
         "settings": {
             "title": "Configuració",
-            "subtitle": "Gestiona la teva organització, compte i preferències.",
+            "subtitle": "Gestiona la teva organització, el teu compte i les teves preferències.",
             "organization": {
                 "title": "Organització",
                 "description": "Configura la informació principal de la teva organització.",
                 "name": "Nom de l'organització",
                 "namePlaceholder": "Introdueix el nom de l'organització",
+                "slug": "Slug",
+                "slugPlaceholder": "p. ex. la-meva-organitzacio",
                 "timezone": "Zona horària",
                 "business": {
                     "title": "Informació empresarial",
-                    "description": "Aquesta informació s'utilitzarà per a la facturació i la configuració dels pagaments.",
+                    "description": "Aquesta informació s'utilitzarà per a la configuració de facturació i pagaments.",
                     "legalName": "Nom legal de l'empresa",
                     "legalNamePlaceholder": "Introdueix el nom legal de l'empresa",
                     "taxId": "NIF",
                     "taxIdPlaceholder": "Introdueix el NIF",
                     "businessType": "Tipus d'empresa",
-                    "phoneNumber": "Telèfon",
+                    "phoneNumber": "Número de telèfon",
                     "phoneNumberPlaceholder": "Introdueix el número de telèfon",
                     "types": {
                         "company": "Empresa",
-                        "individual": "Autònom / Persona física",
+                        "individual": "Autònom / Particular",
                         "nonProfit": "Organització sense ànim de lucre"
                     }
                 },
@@ -344,19 +346,19 @@
                     "title": "Adreça",
                     "description": "Adreça legal o fiscal de l'organització.",
                     "street": "Adreça",
-                    "streetPlaceholder": "Carrer, número i porta",
+                    "streetPlaceholder": "Carrer, número i pis",
                     "unit": "Pis, porta o altres",
                     "unitPlaceholder": "Pis, porta, oficina...",
                     "city": "Ciutat",
-                    "cityPlaceholder": "Barcelona",
+                    "cityPlaceholder": "Introdueix la ciutat",
                     "province": "Província",
-                    "provincePlaceholder": "Barcelona",
+                    "provincePlaceholder": "Introdueix la província",
                     "postalCode": "Codi postal",
-                    "postalCodePlaceholder": "08001",
+                    "postalCodePlaceholder": "Introdueix el codi postal",
                     "country": "País",
                     "countryPlaceholder": "Selecciona un país"
                 },
-                "save": "Desar canvis",
+                "save": "Desar els canvis",
                 "saved": "Canvis desats"
             },
             "account": {
@@ -366,17 +368,17 @@
                 "namePlaceholder": "Introdueix el teu nom",
                 "email": "Correu electrònic",
                 "emailPlaceholder": "Introdueix el teu correu electrònic",
-                "save": "Desar canvis"
+                "save": "Desar els canvis"
             },
             "security": {
                 "title": "Seguretat",
                 "description": "Gestiona la seguretat del teu compte.",
-                "changePassword": "Canviar contrasenya"
+                "changePassword": "Canviar la contrasenya"
             },
             "danger": {
-                "title": "Zona perillosa",
+                "title": "Zona de perill",
                 "description": "Les accions d'aquesta secció poden afectar permanentment el teu compte.",
-                "delete": "Eliminar compte"
+                "delete": "Eliminar el compte"
             }
         }
     }

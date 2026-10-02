@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 type Props = {
@@ -9,15 +9,24 @@ type Props = {
 };
 
 type User = {
-    id: string;
+    id?: string;
     name: string;
     email: string;
+    organization: {
+        id: string;
+        name: string;
+        timezone: string;
+    } | null;
+    onboarding?: {
+        status: string;
+    };
 };
 
 const USER_STORAGE_KEY = "user";
 
 export default function SidebarAccount({ lang }: Props) {
     const router = useRouter();
+    const pathname = usePathname();
 
     const t = useTranslations("dashboard.account");
 
@@ -56,13 +65,16 @@ export default function SidebarAccount({ lang }: Props) {
             }
 
             try {
-                const response = await fetch(`${apiUrl}/api/organization/auth/me`, {
-                    method: "GET",
-                    headers: {
-                        Accept: "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
+                const response = await fetch(
+                    `${apiUrl}/api/organization/auth/me`,
+                    {
+                        method: "GET",
+                        headers: {
+                            Accept: "application/json",
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
 
                 if (!response.ok) {
                     localStorage.removeItem("token");
@@ -72,6 +84,7 @@ export default function SidebarAccount({ lang }: Props) {
                 }
 
                 const data = await response.json();
+
                 const authenticatedUser: User = data.data ?? data;
 
                 setUser(authenticatedUser);
@@ -81,6 +94,28 @@ export default function SidebarAccount({ lang }: Props) {
                     USER_STORAGE_KEY,
                     JSON.stringify(authenticatedUser)
                 );
+
+                /*
+                 * Organization onboarding
+                 *
+                 * The backend is the source of truth.
+                 *
+                 * If the authenticated user does not have an
+                 * organization yet, send them to settings where
+                 * the organization can be created.
+                 */
+                if (
+                    authenticatedUser.organization === null &&
+                    authenticatedUser.onboarding?.status ===
+                    "organization_required"
+                ) {
+                    const settingsPath = `/${lang}/dashboard/settings`;
+
+                    if (pathname !== settingsPath) {
+                        router.replace(settingsPath);
+                        return;
+                    }
+                }
             } catch {
                 localStorage.removeItem("token");
                 localStorage.removeItem(USER_STORAGE_KEY);
@@ -91,7 +126,7 @@ export default function SidebarAccount({ lang }: Props) {
         }
 
         loadUser();
-    }, [lang, router]);
+    }, [lang, pathname, router]);
 
     async function handleLogout() {
         const token = localStorage.getItem("token");

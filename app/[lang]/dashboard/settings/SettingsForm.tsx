@@ -1,7 +1,16 @@
 "use client";
 
-import TimezoneField from "@/components/TimezoneField";
 import { useEffect, useState } from "react";
+import OrganizationSettings from "./OrganizationSettings";
+import AccountSettings from "./AccountSettings";
+import SecuritySettings from "./SecuritySettings";
+import DangerZone from "./DangerZone";
+
+type User = {
+    id: string;
+    name: string;
+    email: string;
+};
 
 type Props = {
     translations: {
@@ -10,8 +19,9 @@ type Props = {
             description: string;
             name: string;
             namePlaceholder: string;
+            slug: string;
+            slugPlaceholder: string;
             timezone: string;
-
             business: {
                 title: string;
                 description: string;
@@ -22,17 +32,14 @@ type Props = {
                 businessType: string;
                 phoneNumber: string;
                 phoneNumberPlaceholder: string;
-
                 types: {
                     company: string;
                     individual: string;
                     nonProfit: string;
                 };
             };
-
             save: string;
         };
-
         account: {
             title: string;
             description: string;
@@ -42,13 +49,11 @@ type Props = {
             emailPlaceholder: string;
             save: string;
         };
-
         security: {
             title: string;
             description: string;
             changePassword: string;
         };
-
         danger: {
             title: string;
             description: string;
@@ -57,37 +62,10 @@ type Props = {
     };
 };
 
-type User = {
-    id: string;
-    name: string;
-    email: string;
-    stripeAccountStatus?: StripeAccountStatus;
-};
-
-type StripeAccountStatus =
-    | "not_connected"
-    | "pending"
-    | "validated"
-    | "restricted"
-    | "disabled";
-
-type OrganizationNameAvailability =
-    | "idle"
-    | "checking"
-    | "available"
-    | "unavailable";
-
 const USER_STORAGE_KEY = "user";
 
-export default function SettingsForm({
-    translations: t,
-}: Props) {
-    const [timezone, setTimezone] = useState("Europe/Madrid");
+export default function SettingsForm({ translations: t }: Props) {
     const [user, setUser] = useState<User | null>(null);
-
-    const [organizationName, setOrganizationName] = useState("");
-    const [organizationNameAvailability, setOrganizationNameAvailability] =
-        useState<OrganizationNameAvailability>("idle");
 
     useEffect(() => {
         const storedUser = localStorage.getItem(USER_STORAGE_KEY);
@@ -112,426 +90,24 @@ export default function SettingsForm({
         }
     }, []);
 
-    useEffect(() => {
-        if (!organizationName.trim()) {
-            setOrganizationNameAvailability("idle");
-            return;
-        }
-
-        if (organizationName.trim().length < 3) {
-            setOrganizationNameAvailability("idle");
-            return;
-        }
-
-        const timeout = window.setTimeout(async () => {
-            setOrganizationNameAvailability("checking");
-
-            try {
-                const token = localStorage.getItem("token");
-
-                const apiUrl =
-                    process.env.NEXT_PUBLIC_API_URL ?? "";
-
-                const response = await fetch(
-                    `${apiUrl}/api/organization/check-name?name=${encodeURIComponent(
-                        organizationName.trim()
-                    )}`,
-                    {
-                        method: "GET",
-                        headers: {
-                            Accept: "application/json",
-                            ...(token
-                                ? {
-                                      Authorization: `Bearer ${token}`,
-                                  }
-                                : {}),
-                        },
-                    }
-                );
-
-                if (!response.ok) {
-                    setOrganizationNameAvailability("idle");
-                    return;
-                }
-
-                const data = await response.json();
-
-                const available =
-                    data.available ??
-                    data.data?.available ??
-                    false;
-
-                setOrganizationNameAvailability(
-                    available ? "available" : "unavailable"
-                );
-            } catch {
-                setOrganizationNameAvailability("idle");
-            }
-        }, 400);
-
-        return () => {
-            window.clearTimeout(timeout);
-        };
-    }, [organizationName]);
-
-    const stripeAccountStatus =
-        user?.stripeAccountStatus ?? "not_connected";
-
-    const stripeAccountValidated =
-        stripeAccountStatus === "validated";
-
-    const inputClassName = stripeAccountValidated
-        ? "w-full rounded-xl border border-gray-200 bg-gray-100 px-4 py-3 text-sm text-gray-500 outline-none cursor-not-allowed"
-        : "w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-1 focus:ring-gray-900";
-
-    const selectClassName = stripeAccountValidated
-        ? "w-full rounded-xl border border-gray-200 bg-gray-100 px-4 py-3 text-sm text-gray-500 outline-none cursor-not-allowed"
-        : "w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900";
-
     return (
         <div className="space-y-6">
-            {/* Organization */}
-            <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <div className="mb-6">
-                    <h3 className="text-base font-semibold text-gray-900">
-                        {t.organization.title}
-                    </h3>
+            <OrganizationSettings
+                translations={t.organization}
+            />
 
-                    <p className="mt-1 text-sm text-gray-500">
-                        {t.organization.description}
-                    </p>
-                </div>
+            <AccountSettings
+                translations={t.account}
+                user={user}
+            />
 
-                <div className="space-y-6">
-                    {/* Organization name + timezone */}
-                    <div className="grid gap-5 md:grid-cols-2">
-                        <div>
-                            <label
-                                htmlFor="organization-name"
-                                className="mb-2 block text-sm font-medium text-gray-700"
-                            >
-                                {t.organization.name}
-                            </label>
+            <SecuritySettings
+                translations={t.security}
+            />
 
-                            <input
-                                id="organization-name"
-                                name="name"
-                                type="text"
-                                value={organizationName}
-                                onChange={(event) =>
-                                    setOrganizationName(
-                                        event.target.value
-                                    )
-                                }
-                                onKeyUp={() => {
-                                    if (
-                                        !organizationName.trim()
-                                    ) {
-                                        setOrganizationNameAvailability(
-                                            "idle"
-                                        );
-                                    }
-                                }}
-                                placeholder={
-                                    t.organization.namePlaceholder
-                                }
-                                autoComplete="off"
-                                readOnly={stripeAccountValidated}
-                                className={inputClassName}
-                            />
-
-                            {/* Availability */}
-                            {!stripeAccountValidated &&
-                                organizationName.trim().length >=
-                                    3 && (
-                                    <div className="mt-2 text-sm">
-                                        {organizationNameAvailability ===
-                                            "checking" && (
-                                            <span className="text-gray-500">
-                                                Checking availability...
-                                            </span>
-                                        )}
-
-                                        {organizationNameAvailability ===
-                                            "available" && (
-                                            <span className="text-green-600">
-                                                Organization name is
-                                                available.
-                                            </span>
-                                        )}
-
-                                        {organizationNameAvailability ===
-                                            "unavailable" && (
-                                            <span className="text-red-600">
-                                                Organization name is
-                                                already taken.
-                                            </span>
-                                        )}
-                                    </div>
-                                )}
-                        </div>
-
-                        <TimezoneField
-                            id="organization-timezone"
-                            value={timezone}
-                            onChange={setTimezone}
-                            label={t.organization.timezone}
-                        />
-                    </div>
-
-                    {/* Business details */}
-                    <div className="border-t border-gray-100 pt-6">
-                        <div className="mb-5">
-                            <h4 className="text-sm font-semibold text-gray-900">
-                                {t.organization.business.title}
-                            </h4>
-
-                            <p className="mt-1 text-sm text-gray-500">
-                                {t.organization.business.description}
-                            </p>
-                        </div>
-
-                        <div className="grid gap-5 md:grid-cols-2">
-                            {/* Legal name */}
-                            <div>
-                                <label
-                                    htmlFor="legal-name"
-                                    className="mb-2 block text-sm font-medium text-gray-700"
-                                >
-                                    {
-                                        t.organization.business
-                                            .legalName
-                                    }
-                                </label>
-
-                                <input
-                                    id="legal-name"
-                                    name="legal_name"
-                                    type="text"
-                                    defaultValue=""
-                                    placeholder={
-                                        t.organization.business
-                                            .legalNamePlaceholder
-                                    }
-                                    autoComplete="off"
-                                    readOnly={stripeAccountValidated}
-                                    className={inputClassName}
-                                />
-                            </div>
-
-                            {/* Tax ID */}
-                            <div>
-                                <label
-                                    htmlFor="tax-id"
-                                    className="mb-2 block text-sm font-medium text-gray-700"
-                                >
-                                    {
-                                        t.organization.business
-                                            .taxId
-                                    }
-                                </label>
-
-                                <input
-                                    id="tax-id"
-                                    name="tax_id"
-                                    type="text"
-                                    defaultValue=""
-                                    placeholder={
-                                        t.organization.business
-                                            .taxIdPlaceholder
-                                    }
-                                    autoComplete="off"
-                                    readOnly={stripeAccountValidated}
-                                    className={inputClassName}
-                                />
-                            </div>
-
-                            {/* Business type */}
-                            <div>
-                                <label
-                                    htmlFor="business-type"
-                                    className="mb-2 block text-sm font-medium text-gray-700"
-                                >
-                                    {
-                                        t.organization.business
-                                            .businessType
-                                    }
-                                </label>
-
-                                <select
-                                    id="business-type"
-                                    name="business_type"
-                                    defaultValue="company"
-                                    autoComplete="off"
-                                    disabled={stripeAccountValidated}
-                                    className={selectClassName}
-                                >
-                                    <option value="company">
-                                        {
-                                            t.organization.business
-                                                .types.company
-                                        }
-                                    </option>
-
-                                    <option value="individual">
-                                        {
-                                            t.organization.business
-                                                .types.individual
-                                        }
-                                    </option>
-
-                                    <option value="non_profit">
-                                        {
-                                            t.organization.business
-                                                .types.nonProfit
-                                        }
-                                    </option>
-                                </select>
-                            </div>
-
-                            {/* Phone */}
-                            <div>
-                                <label
-                                    htmlFor="phone-number"
-                                    className="mb-2 block text-sm font-medium text-gray-700"
-                                >
-                                    {
-                                        t.organization.business
-                                            .phoneNumber
-                                    }
-                                </label>
-
-                                <input
-                                    id="phone-number"
-                                    name="phone_number"
-                                    type="tel"
-                                    defaultValue=""
-                                    placeholder={
-                                        t.organization.business
-                                            .phoneNumberPlaceholder
-                                    }
-                                    autoComplete="off"
-                                    readOnly={stripeAccountValidated}
-                                    className={inputClassName}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Save */}
-                {!stripeAccountValidated && (
-                    <div className="mt-6 flex justify-end">
-                        <button
-                            type="button"
-                            disabled={
-                                organizationNameAvailability !==
-                                "available"
-                            }
-                            className="rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            {t.organization.save}
-                        </button>
-                    </div>
-                )}
-            </section>
-
-            {/* Account */}
-            <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <div className="mb-6">
-                    <h3 className="text-base font-semibold text-gray-900">
-                        {t.account.title}
-                    </h3>
-
-                    <p className="mt-1 text-sm text-gray-500">
-                        {t.account.description}
-                    </p>
-                </div>
-
-                <div className="grid gap-5 md:grid-cols-2">
-                    {/* Name */}
-                    <div>
-                        <label
-                            htmlFor="account-name"
-                            className="mb-2 block text-sm font-medium text-gray-700"
-                        >
-                            {t.account.name}
-                        </label>
-
-                        <input
-                            id="account-name"
-                            name="account_name"
-                            type="text"
-                            value={user?.name ?? ""}
-                            disabled
-                            placeholder={t.account.namePlaceholder}
-                            autoComplete="off"
-                            className="w-full rounded-xl border border-gray-300 bg-gray-100 px-4 py-3 text-sm text-gray-500 outline-none disabled:cursor-not-allowed"
-                        />
-                    </div>
-
-                    {/* Email */}
-                    <div>
-                        <label
-                            htmlFor="account-email"
-                            className="mb-2 block text-sm font-medium text-gray-700"
-                        >
-                            {t.account.email}
-                        </label>
-
-                        <input
-                            id="account-email"
-                            name="account_email"
-                            type="email"
-                            value={user?.email ?? ""}
-                            disabled
-                            placeholder={t.account.emailPlaceholder}
-                            autoComplete="off"
-                            className="w-full rounded-xl border border-gray-300 bg-gray-100 px-4 py-3 text-sm text-gray-500 outline-none disabled:cursor-not-allowed"
-                        />
-                    </div>
-                </div>
-            </section>
-
-            {/* Security */}
-            <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <div className="mb-6">
-                    <h3 className="text-base font-semibold text-gray-900">
-                        {t.security.title}
-                    </h3>
-
-                    <p className="mt-1 text-sm text-gray-500">
-                        {t.security.description}
-                    </p>
-                </div>
-
-                <button
-                    type="button"
-                    className="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
-                >
-                    {t.security.changePassword}
-                </button>
-            </section>
-
-            {/* Danger zone */}
-            <section className="rounded-2xl border border-red-200 bg-white p-6 shadow-sm">
-                <div className="mb-6">
-                    <h3 className="text-base font-semibold text-red-600">
-                        {t.danger.title}
-                    </h3>
-
-                    <p className="mt-1 text-sm text-gray-500">
-                        {t.danger.description}
-                    </p>
-                </div>
-
-                <button
-                    type="button"
-                    className="rounded-xl border border-red-300 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
-                >
-                    {t.danger.delete}
-                </button>
-            </section>
+            <DangerZone
+                translations={t.danger}
+            />
         </div>
     );
 }

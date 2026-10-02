@@ -312,26 +312,28 @@
         },
         "settings": {
             "title": "Configuración",
-            "subtitle": "Gestiona tu organización, cuenta y preferencias.",
+            "subtitle": "Gestiona tu organización, tu cuenta y tus preferencias.",
             "organization": {
                 "title": "Organización",
                 "description": "Configura la información principal de tu organización.",
                 "name": "Nombre de la organización",
                 "namePlaceholder": "Introduce el nombre de la organización",
+                "slug": "Slug",
+                "slugPlaceholder": "p. ej. mi-organizacion",
                 "timezone": "Zona horaria",
                 "business": {
                     "title": "Información empresarial",
-                    "description": "Esta información se utilizará para la facturación y la configuración de los pagos.",
+                    "description": "Esta información se utilizará para la configuración de facturación y pagos.",
                     "legalName": "Nombre legal de la empresa",
                     "legalNamePlaceholder": "Introduce el nombre legal de la empresa",
                     "taxId": "NIF",
                     "taxIdPlaceholder": "Introduce el NIF",
                     "businessType": "Tipo de empresa",
-                    "phoneNumber": "Teléfono",
+                    "phoneNumber": "Número de teléfono",
                     "phoneNumberPlaceholder": "Introduce el número de teléfono",
                     "types": {
                         "company": "Empresa",
-                        "individual": "Autónomo / Persona física",
+                        "individual": "Autónomo / Particular",
                         "nonProfit": "Organización sin ánimo de lucro"
                     }
                 },
@@ -339,15 +341,15 @@
                     "title": "Dirección",
                     "description": "Dirección legal o fiscal de la organización.",
                     "street": "Dirección",
-                    "streetPlaceholder": "Calle, número y puerta",
+                    "streetPlaceholder": "Calle, número y piso",
                     "unit": "Piso, puerta u otros",
                     "unitPlaceholder": "Piso, puerta, oficina...",
                     "city": "Ciudad",
-                    "cityPlaceholder": "Barcelona",
+                    "cityPlaceholder": "Introduce la ciudad",
                     "province": "Provincia",
-                    "provincePlaceholder": "Barcelona",
+                    "provincePlaceholder": "Introduce la provincia",
                     "postalCode": "Código postal",
-                    "postalCodePlaceholder": "08001",
+                    "postalCodePlaceholder": "Introduce el código postal",
                     "country": "País",
                     "countryPlaceholder": "Selecciona un país"
                 },
@@ -359,8 +361,8 @@
                 "description": "Gestiona tu información personal.",
                 "name": "Nombre",
                 "namePlaceholder": "Introduce tu nombre",
-                "email": "Email",
-                "emailPlaceholder": "Introduce tu email",
+                "email": "Correo electrónico",
+                "emailPlaceholder": "Introduce tu correo electrónico",
                 "save": "Guardar cambios"
             },
             "security": {
@@ -369,7 +371,7 @@
                 "changePassword": "Cambiar contraseña"
             },
             "danger": {
-                "title": "Zona peligrosa",
+                "title": "Zona de peligro",
                 "description": "Las acciones de esta sección pueden afectar permanentemente a tu cuenta.",
                 "delete": "Eliminar cuenta"
             }

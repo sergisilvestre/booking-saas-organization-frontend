@@ -1,3 +1,4 @@
+// SettingsPage.tsx
 import { getMessages } from "next-intl/server";
 import SettingsForm from "./SettingsForm";
 import SettingsWarnings from "./SettingsWarnings";
@@ -12,12 +13,10 @@ export default async function SettingsPage({ params }: Props) {
     const { lang } = await params;
 
     const messages = await getMessages({ locale: lang });
-
     const translations = messages.dashboard.settings;
 
     const accountNeedsValidation = true;
     const paidBookingsNeedActivation = true;
-
     const stripeOnboardingUrl = undefined;
 
     return (
@@ -38,7 +37,9 @@ export default async function SettingsPage({ params }: Props) {
                 stripeOnboardingUrl={stripeOnboardingUrl}
             />
 
-            <SettingsForm translations={translations} />
+            <SettingsForm
+                translations={translations}
+            />
         </div>
     );
 }

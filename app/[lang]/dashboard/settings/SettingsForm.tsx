@@ -60,11 +60,16 @@ type Props = {
             delete: string;
         };
     };
+
+    onOrganizationRegistered: () => void;
 };
 
 const USER_STORAGE_KEY = "user";
 
-export default function SettingsForm({ translations: t }: Props) {
+export default function SettingsForm({
+    translations: t,
+    onOrganizationRegistered,
+}: Props) {
     const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
@@ -94,6 +99,7 @@ export default function SettingsForm({ translations: t }: Props) {
         <div className="space-y-6">
             <OrganizationSettings
                 translations={t.organization}
+                onOrganizationRegistered={onOrganizationRegistered}
             />
 
             <AccountSettings

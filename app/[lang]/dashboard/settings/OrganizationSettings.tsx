@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import TimezoneField from "@/components/TimezoneField";
+
 import { apiFetch } from "@/lib/api";
 
 type Translations = {
@@ -33,6 +35,7 @@ type Translations = {
 
 type Props = {
     translations: Translations;
+    onOrganizationRegistered: () => void;
 };
 
 type OrganizationSlugAvailability =
@@ -56,29 +59,19 @@ const MAX_TAX_ID_LENGTH = 20;
 const MIN_PHONE_LENGTH = 9;
 const MAX_PHONE_LENGTH = 20;
 
-// Lowercase letters, numbers and hyphens.
-// Must start and end with a letter or number.
 const SLUG_REGEX = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
 
-// Spanish NIF/DNI:
-// 12345678Z
 const DNI_REGEX = /^\d{8}[A-Z]$/;
 
-// Spanish NIE:
-// X1234567L / Y1234567X / Z1234567R
 const NIE_REGEX = /^[XYZ]\d{7}[A-Z]$/;
 
-// Spanish CIF:
-// B12345678
-// A1234567B
 const CIF_REGEX = /^[ABCDEFGHJNPQRSUVW]\d{7}[0-9A-J]$/;
 
-// International phone number.
-// Allows +34 600 123 456, +34600123456, 600 123 456, etc.
 const PHONE_REGEX = /^\+?[0-9][0-9\s().-]{7,18}[0-9]$/;
 
 export default function OrganizationSettings({
     translations: t,
+    onOrganizationRegistered,
 }: Props) {
     const [timezone, setTimezone] = useState("Europe/Madrid");
 
@@ -94,10 +87,15 @@ export default function OrganizationSettings({
     const [phoneNumber, setPhoneNumber] = useState("");
 
     const [saveError, setSaveError] = useState<string | null>(null);
+
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>(
         {}
     );
+
     const [isSaving, setIsSaving] = useState(false);
+
+    // After successful registration the form becomes read-only.
+    const [isRegistered, setIsRegistered] = useState(false);
 
     useEffect(() => {
         const slug = organizationSlug.trim();
@@ -122,7 +120,7 @@ export default function OrganizationSettings({
 
             try {
                 const response = await apiFetch(
-                    `organization/check-slug?slug=${encodeURIComponent(slug)}`
+                    `organization/onboarding/check-slug?slug=${encodeURIComponent(slug)}`
                 );
 
                 if (!response.ok) {
@@ -170,7 +168,6 @@ export default function OrganizationSettings({
         const taxIdValue = taxId.trim().toUpperCase();
         const phoneValue = phoneNumber.trim();
 
-        // Organization name
         if (!name) {
             errors.name = "Organization name is required.";
         } else if (name.length < MIN_ORGANIZATION_NAME_LENGTH) {
@@ -179,7 +176,6 @@ export default function OrganizationSettings({
             errors.name = `Organization name must not exceed ${MAX_ORGANIZATION_NAME_LENGTH} characters.`;
         }
 
-        // Organization slug
         if (!slug) {
             errors.slug = "Organization slug is required.";
         } else if (slug.length < MIN_SLUG_LENGTH) {
@@ -196,7 +192,6 @@ export default function OrganizationSettings({
                 "Please wait until the organization slug is available.";
         }
 
-        // Legal name
         if (!legalNameValue) {
             errors.legal_name = "Legal name is required.";
         } else if (legalNameValue.length < MIN_LEGAL_NAME_LENGTH) {
@@ -205,7 +200,6 @@ export default function OrganizationSettings({
             errors.legal_name = `Legal name must not exceed ${MAX_LEGAL_NAME_LENGTH} characters.`;
         }
 
-        // Tax ID
         if (!taxIdValue) {
             errors.tax_id = "NIF / Tax ID is required.";
         } else if (
@@ -222,7 +216,6 @@ export default function OrganizationSettings({
                 "Please enter a valid Spanish NIF, NIE or CIF.";
         }
 
-        // Business type
         if (!businessType) {
             errors.business_type = "Business type is required.";
         } else if (
@@ -231,7 +224,6 @@ export default function OrganizationSettings({
             errors.business_type = "Invalid business type.";
         }
 
-        // Phone
         if (!phoneValue) {
             errors.phone_number = "Phone number is required.";
         } else {
@@ -257,6 +249,10 @@ export default function OrganizationSettings({
     };
 
     const handleSave = async () => {
+        if (isRegistered) {
+            return;
+        }
+
         setSaveError(null);
 
         if (!validateForm()) {
@@ -266,7 +262,7 @@ export default function OrganizationSettings({
         setIsSaving(true);
 
         try {
-            const response = await apiFetch("organization/register", {
+            const response = await apiFetch("organization/onboarding/register-organization", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -303,14 +299,21 @@ export default function OrganizationSettings({
                     data?.message ??
                     "Unable to save the organization."
                 );
-            } else {
-                // ocultar dialogoo pendiente validacion
-                // mostar activar pagos
-                // formulario solo lectura
             }
+
+            /*
+             * Organization successfully registered.
+             *
+             * 1. Hide "account validation pending".
+             * 2. Show "activate paid bookings".
+             * 3. Make this form read-only.
+             */
+            setIsRegistered(true);
 
             setFieldErrors({});
             setSaveError(null);
+
+            onOrganizationRegistered();
         } catch (error) {
             setSaveError(
                 error instanceof Error
@@ -323,10 +326,10 @@ export default function OrganizationSettings({
     };
 
     const inputClassName =
-        "w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-1 focus:ring-gray-900";
+        "w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500";
 
     const selectClassName =
-        "w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900";
+        "w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500";
 
     const errorClassName =
         "border-red-500 focus:border-red-500 focus:ring-red-500";
@@ -360,6 +363,7 @@ export default function OrganizationSettings({
                             type="text"
                             value={organizationName}
                             maxLength={MAX_ORGANIZATION_NAME_LENGTH}
+                            disabled={isRegistered}
                             onChange={(event) => {
                                 setOrganizationName(event.target.value);
                                 clearFieldError("name");
@@ -367,9 +371,9 @@ export default function OrganizationSettings({
                             placeholder={t.namePlaceholder}
                             autoComplete="off"
                             className={`${inputClassName} ${fieldErrors.name
-                                    ? errorClassName
-                                    : ""
-                                }`}
+                                ? errorClassName
+                                : ""
+                                } `}
                         />
 
                         {fieldErrors.name && (
@@ -395,6 +399,7 @@ export default function OrganizationSettings({
                             value={organizationSlug}
                             minLength={MIN_SLUG_LENGTH}
                             maxLength={MAX_SLUG_LENGTH}
+                            disabled={isRegistered}
                             onChange={(event) => {
                                 const value = event.target.value
                                     .toLowerCase()
@@ -407,12 +412,13 @@ export default function OrganizationSettings({
                             placeholder={t.slugPlaceholder}
                             autoComplete="off"
                             className={`${inputClassName} ${fieldErrors.slug
-                                    ? errorClassName
-                                    : ""
-                                }`}
+                                ? errorClassName
+                                : ""
+                                } `}
                         />
 
-                        {organizationSlug.trim().length > 0 &&
+                        {!isRegistered &&
+                            organizationSlug.trim().length > 0 &&
                             organizationSlug.trim().length <
                             MIN_SLUG_LENGTH && (
                                 <p className="mt-2 text-sm text-red-600">
@@ -421,7 +427,8 @@ export default function OrganizationSettings({
                                 </p>
                             )}
 
-                        {organizationSlug.trim().length >=
+                        {!isRegistered &&
+                            organizationSlug.trim().length >=
                             MIN_SLUG_LENGTH &&
                             organizationSlug.trim().length <=
                             MAX_SLUG_LENGTH && (
@@ -462,6 +469,7 @@ export default function OrganizationSettings({
                     value={timezone}
                     onChange={setTimezone}
                     label={t.timezone}
+                    disabled={isRegistered}
                 />
 
                 {/* Business details */}
@@ -493,6 +501,7 @@ export default function OrganizationSettings({
                                 value={legalName}
                                 minLength={MIN_LEGAL_NAME_LENGTH}
                                 maxLength={MAX_LEGAL_NAME_LENGTH}
+                                disabled={isRegistered}
                                 onChange={(event) => {
                                     setLegalName(event.target.value);
                                     clearFieldError("legal_name");
@@ -502,9 +511,9 @@ export default function OrganizationSettings({
                                 }
                                 autoComplete="off"
                                 className={`${inputClassName} ${fieldErrors.legal_name
-                                        ? errorClassName
-                                        : ""
-                                    }`}
+                                    ? errorClassName
+                                    : ""
+                                    } `}
                             />
 
                             {fieldErrors.legal_name && (
@@ -530,6 +539,7 @@ export default function OrganizationSettings({
                                 value={taxId}
                                 minLength={MIN_TAX_ID_LENGTH}
                                 maxLength={MAX_TAX_ID_LENGTH}
+                                disabled={isRegistered}
                                 onChange={(event) => {
                                     setTaxId(
                                         event.target.value
@@ -544,9 +554,9 @@ export default function OrganizationSettings({
                                 }
                                 autoComplete="off"
                                 className={`${inputClassName} ${fieldErrors.tax_id
-                                        ? errorClassName
-                                        : ""
-                                    }`}
+                                    ? errorClassName
+                                    : ""
+                                    } `}
                             />
 
                             {fieldErrors.tax_id && (
@@ -569,14 +579,15 @@ export default function OrganizationSettings({
                                 id="business-type"
                                 name="business_type"
                                 value={businessType}
+                                disabled={isRegistered}
                                 onChange={(event) => {
                                     setBusinessType(event.target.value);
                                     clearFieldError("business_type");
                                 }}
                                 className={`${selectClassName} ${fieldErrors.business_type
-                                        ? errorClassName
-                                        : ""
-                                    }`}
+                                    ? errorClassName
+                                    : ""
+                                    } `}
                             >
                                 <option value="company">
                                     {t.business.types.company}
@@ -613,6 +624,7 @@ export default function OrganizationSettings({
                                 type="tel"
                                 value={phoneNumber}
                                 maxLength={MAX_PHONE_LENGTH}
+                                disabled={isRegistered}
                                 onChange={(event) => {
                                     setPhoneNumber(event.target.value);
                                     clearFieldError("phone_number");
@@ -622,9 +634,9 @@ export default function OrganizationSettings({
                                 }
                                 autoComplete="off"
                                 className={`${inputClassName} ${fieldErrors.phone_number
-                                        ? errorClassName
-                                        : ""
-                                    }`}
+                                    ? errorClassName
+                                    : ""
+                                    } `}
                             />
 
                             {fieldErrors.phone_number && (
@@ -643,16 +655,18 @@ export default function OrganizationSettings({
                 </div>
             )}
 
-            <div className="mt-6 flex justify-end">
-                <button
-                    type="button"
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                    {isSaving ? "Saving..." : t.save}
-                </button>
-            </div>
+            {!isRegistered && (
+                <div className="mt-6 flex justify-end">
+                    <button
+                        type="button"
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        className="rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        {isSaving ? "Saving..." : t.save}
+                    </button>
+                </div>
+            )}
         </section>
     );
 }

@@ -8,19 +8,74 @@ type Props = {
     paidBookingsNeedActivation: boolean;
 };
 
+type StoredUser = {
+    onboarding?: {
+        status?: string;
+    };
+};
+
+const USER_STORAGE_KEY = "user";
+
 export default function SettingsWarnings({
     accountNeedsValidation,
     paidBookingsNeedActivation,
 }: Props) {
+    const [onboardingNeedsValidation, setOnboardingNeedsValidation] =
+        useState(accountNeedsValidation);
+
     const [stripeOnboardingUrl, setStripeOnboardingUrl] = useState<string | null>(
         null
     );
+
     const [loadingStripe, setLoadingStripe] = useState(false);
+
+    useEffect(() => {
+        const loadOnboardingStatus = () => {
+            const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+
+            if (!storedUser) {
+                setOnboardingNeedsValidation(accountNeedsValidation);
+                return;
+            }
+
+            try {
+                const parsed = JSON.parse(storedUser);
+                const user: StoredUser = parsed.data ?? parsed;
+
+                const onboardingStatus = user.onboarding?.status;
+
+                setOnboardingNeedsValidation(
+                    onboardingStatus !== "complete"
+                );
+            } catch (error) {
+                console.error(
+                    "Unable to read user onboarding status:",
+                    error
+                );
+
+                setOnboardingNeedsValidation(accountNeedsValidation);
+            }
+        };
+
+        loadOnboardingStatus();
+
+        window.addEventListener(
+            "organization-registered",
+            loadOnboardingStatus
+        );
+
+        return () => {
+            window.removeEventListener(
+                "organization-registered",
+                loadOnboardingStatus
+            );
+        };
+    }, [accountNeedsValidation]);
 
     useEffect(() => {
         if (
             !paidBookingsNeedActivation ||
-            accountNeedsValidation
+            onboardingNeedsValidation
         ) {
             return;
         }
@@ -30,7 +85,7 @@ export default function SettingsWarnings({
                 setLoadingStripe(true);
 
                 const response = await apiFetch(
-                    "organization/onboarding"
+                    "organization/onboarding/form-data"
                 );
 
                 const data = await response.json();
@@ -57,10 +112,13 @@ export default function SettingsWarnings({
         };
 
         loadStripeOnboardingUrl();
-    }, [accountNeedsValidation, paidBookingsNeedActivation]);
+    }, [
+        onboardingNeedsValidation,
+        paidBookingsNeedActivation,
+    ]);
 
     if (
-        !accountNeedsValidation &&
+        !onboardingNeedsValidation &&
         !paidBookingsNeedActivation
     ) {
         return null;
@@ -68,7 +126,7 @@ export default function SettingsWarnings({
 
     return (
         <div className="mb-6 space-y-3">
-            {accountNeedsValidation && (
+            {onboardingNeedsValidation && (
                 <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
                     <div className="flex items-start gap-3">
                         <div className="mt-0.5 font-bold text-amber-600">
@@ -89,13 +147,36 @@ export default function SettingsWarnings({
                 </div>
             )}
 
-            {paidBookingsNeedActivation && !accountNeedsValidation && (
-                <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
-                    {stripeOnboardingUrl ? (
-                        <a
-                            href={stripeOnboardingUrl}
-                            className="block w-full cursor-pointer text-left"
-                        >
+            {paidBookingsNeedActivation &&
+                !onboardingNeedsValidation && (
+                    <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+                        {stripeOnboardingUrl ? (
+                            <a
+                                href={stripeOnboardingUrl}
+                                className="block w-full cursor-pointer text-left"
+                            >
+                                <div className="flex items-start gap-3">
+                                    <div className="mt-0.5 font-bold text-blue-600">
+                                        !
+                                    </div>
+
+                                    <div>
+                                        <p className="text-sm font-semibold text-blue-900">
+                                            Activate paid bookings
+                                        </p>
+
+                                        <p className="mt-1 text-sm text-blue-800">
+                                            Connect Stripe to start accepting
+                                            paid bookings.
+                                        </p>
+
+                                        <p className="mt-2 text-sm font-semibold text-blue-900">
+                                            Click here to continue →
+                                        </p>
+                                    </div>
+                                </div>
+                            </a>
+                        ) : (
                             <div className="flex items-start gap-3">
                                 <div className="mt-0.5 font-bold text-blue-600">
                                     !
@@ -111,38 +192,16 @@ export default function SettingsWarnings({
                                         bookings.
                                     </p>
 
-                                    <p className="mt-2 text-sm font-semibold text-blue-900">
-                                        Click here to continue →
-                                    </p>
+                                    {loadingStripe && (
+                                        <p className="mt-2 text-sm font-semibold text-blue-900">
+                                            Preparing Stripe...
+                                        </p>
+                                    )}
                                 </div>
                             </div>
-                        </a>
-                    ) : (
-                        <div className="flex items-start gap-3">
-                            <div className="mt-0.5 font-bold text-blue-600">
-                                !
-                            </div>
-
-                            <div>
-                                <p className="text-sm font-semibold text-blue-900">
-                                    Activate paid bookings
-                                </p>
-
-                                <p className="mt-1 text-sm text-blue-800">
-                                    Connect Stripe to start accepting paid
-                                    bookings.
-                                </p>
-
-                                {loadingStripe && (
-                                    <p className="mt-2 text-sm font-semibold text-blue-900">
-                                        Preparing Stripe...
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
+                        )}
+                    </div>
+                )}
         </div>
     );
 }

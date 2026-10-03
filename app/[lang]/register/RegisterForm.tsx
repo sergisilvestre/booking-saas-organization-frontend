@@ -108,7 +108,7 @@ export default function RegisterForm({ lang }: Props) {
 
             // Organization creation happens after account registration.
             router.push(
-                `/${lang}/profile/organization`,
+                `/${lang}/dashboard/settings`,
             );
         } catch (err) {
             setError(

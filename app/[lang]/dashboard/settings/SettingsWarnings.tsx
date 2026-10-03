@@ -23,37 +23,46 @@ export default function SettingsWarnings({
     const [onboardingNeedsValidation, setOnboardingNeedsValidation] =
         useState(accountNeedsValidation);
 
-    const [stripeOnboardingUrl, setStripeOnboardingUrl] = useState<string | null>(
-        null
-    );
+    const [stripeOnboardingUrl, setStripeOnboardingUrl] = useState<
+        string | null
+    >(null);
 
     const [loadingStripe, setLoadingStripe] = useState(false);
 
     useEffect(() => {
-        const loadOnboardingStatus = () => {
-            const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-
-            if (!storedUser) {
-                setOnboardingNeedsValidation(accountNeedsValidation);
-                return;
-            }
-
+        const loadOnboardingStatus = async () => {
             try {
-                const parsed = JSON.parse(storedUser);
-                const user: StoredUser = parsed.data ?? parsed;
+                const response = await apiFetch(
+                    "organization/auth/me"
+                );
 
-                const onboardingStatus = user.onboarding?.status;
+                if (!response.ok) {
+                    setOnboardingNeedsValidation(
+                        accountNeedsValidation
+                    );
+                    return;
+                }
+
+                const data = await response.json();
+                const user: StoredUser = data.data ?? data;
+
+                localStorage.setItem(
+                    USER_STORAGE_KEY,
+                    JSON.stringify(user)
+                );
 
                 setOnboardingNeedsValidation(
-                    onboardingStatus !== "complete"
+                    user.onboarding?.status !== "complete"
                 );
             } catch (error) {
                 console.error(
-                    "Unable to read user onboarding status:",
+                    "Unable to load onboarding status:",
                     error
                 );
 
-                setOnboardingNeedsValidation(accountNeedsValidation);
+                setOnboardingNeedsValidation(
+                    accountNeedsValidation
+                );
             }
         };
 
@@ -83,6 +92,7 @@ export default function SettingsWarnings({
         const loadStripeOnboardingUrl = async () => {
             try {
                 setLoadingStripe(true);
+                setStripeOnboardingUrl(null);
 
                 const response = await apiFetch(
                     "organization/onboarding/form-data"
@@ -105,7 +115,10 @@ export default function SettingsWarnings({
 
                 setStripeOnboardingUrl(data.url);
             } catch (error) {
-                console.error("Stripe onboarding error:", error);
+                console.error(
+                    "Stripe onboarding error:",
+                    error
+                );
             } finally {
                 setLoadingStripe(false);
             }
@@ -139,8 +152,8 @@ export default function SettingsWarnings({
                             </p>
 
                             <p className="mt-1 text-sm text-amber-800">
-                                Complete your account information to unlock
-                                all features.
+                                Complete your account information to
+                                unlock all features.
                             </p>
                         </div>
                     </div>
@@ -166,8 +179,8 @@ export default function SettingsWarnings({
                                         </p>
 
                                         <p className="mt-1 text-sm text-blue-800">
-                                            Connect Stripe to start accepting
-                                            paid bookings.
+                                            Connect Stripe to start
+                                            accepting paid bookings.
                                         </p>
 
                                         <p className="mt-2 text-sm font-semibold text-blue-900">
@@ -188,8 +201,8 @@ export default function SettingsWarnings({
                                     </p>
 
                                     <p className="mt-1 text-sm text-blue-800">
-                                        Connect Stripe to start accepting paid
-                                        bookings.
+                                        Connect Stripe to start
+                                        accepting paid bookings.
                                     </p>
 
                                     {loadingStripe && (

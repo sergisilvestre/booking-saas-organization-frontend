@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 
 import TimezoneField from "@/components/TimezoneField";
-
 import { apiFetch } from "@/lib/api";
 
 type Translations = {
@@ -35,7 +34,6 @@ type Translations = {
 
 type Props = {
     translations: Translations;
-    onOrganizationRegistered: () => void;
 };
 
 type OrganizationSlugAvailability =
@@ -60,18 +58,13 @@ const MIN_PHONE_LENGTH = 9;
 const MAX_PHONE_LENGTH = 20;
 
 const SLUG_REGEX = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
-
 const DNI_REGEX = /^\d{8}[A-Z]$/;
-
 const NIE_REGEX = /^[XYZ]\d{7}[A-Z]$/;
-
 const CIF_REGEX = /^[ABCDEFGHJNPQRSUVW]\d{7}[0-9A-J]$/;
-
 const PHONE_REGEX = /^\+?[0-9][0-9\s().-]{7,18}[0-9]$/;
 
 export default function OrganizationSettings({
     translations: t,
-    onOrganizationRegistered,
 }: Props) {
     const [timezone, setTimezone] = useState("Europe/Madrid");
 
@@ -87,15 +80,44 @@ export default function OrganizationSettings({
     const [phoneNumber, setPhoneNumber] = useState("");
 
     const [saveError, setSaveError] = useState<string | null>(null);
-
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>(
         {}
     );
 
     const [isSaving, setIsSaving] = useState(false);
-
-    // After successful registration the form becomes read-only.
     const [isRegistered, setIsRegistered] = useState(false);
+
+    useEffect(() => {
+        try {
+            const storedUser = localStorage.getItem("user");
+
+            if (!storedUser) {
+                return;
+            }
+
+            const parsed = JSON.parse(storedUser);
+            const user = parsed.data ?? parsed;
+            const organization = user?.organization;
+
+            if (!organization) {
+                return;
+            }
+
+            setOrganizationName(organization.name ?? "");
+            setOrganizationSlug(organization.slug ?? "");
+            setTimezone(organization.timezone ?? "Europe/Madrid");
+            setLegalName(organization.legalName ?? "");
+            setTaxId(organization.taxId ?? "");
+            setBusinessType(organization.businessType ?? "company");
+            setPhoneNumber(organization.phoneNumber ?? "");
+            setIsRegistered(true);
+        } catch (error) {
+            console.error(
+                "Failed to load organization from localStorage:",
+                error
+            );
+        }
+    }, []);
 
     useEffect(() => {
         const slug = organizationSlug.trim();
@@ -262,21 +284,24 @@ export default function OrganizationSettings({
         setIsSaving(true);
 
         try {
-            const response = await apiFetch("organization/onboarding/register-organization", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    name: organizationName.trim(),
-                    slug: organizationSlug.trim(),
-                    timezone,
-                    legal_name: legalName.trim(),
-                    tax_id: taxId.trim().toUpperCase(),
-                    business_type: businessType,
-                    phone_number: phoneNumber.trim(),
-                }),
-            });
+            const response = await apiFetch(
+                "organization/onboarding/register-organization",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        name: organizationName.trim(),
+                        slug: organizationSlug.trim(),
+                        timezone,
+                        legal_name: legalName.trim(),
+                        tax_id: taxId.trim().toUpperCase(),
+                        business_type: businessType,
+                        phone_number: phoneNumber.trim(),
+                    }),
+                }
+            );
 
             const data = await response.json().catch(() => null);
 
@@ -302,18 +327,28 @@ export default function OrganizationSettings({
             }
 
             /*
-             * Organization successfully registered.
-             *
-             * 1. Hide "account validation pending".
-             * 2. Show "activate paid bookings".
-             * 3. Make this form read-only.
+             * Refresh the authenticated user so the new
+             * organization/onboarding state is stored locally.
              */
-            setIsRegistered(true);
+            const meResponse = await apiFetch("organization/auth/me");
 
+            if (meResponse.ok) {
+                const meData = await meResponse.json();
+                const updatedUser = meData.data ?? meData;
+
+                localStorage.setItem(
+                    "user",
+                    JSON.stringify(updatedUser)
+                );
+            }
+
+            setIsRegistered(true);
             setFieldErrors({});
             setSaveError(null);
 
-            onOrganizationRegistered();
+            window.dispatchEvent(
+                new Event("organization-registered")
+            );
         } catch (error) {
             setSaveError(
                 error instanceof Error
@@ -348,7 +383,6 @@ export default function OrganizationSettings({
 
             <div className="space-y-6">
                 <div className="grid gap-5 md:grid-cols-2">
-                    {/* Organization name */}
                     <div>
                         <label
                             htmlFor="organization-name"
@@ -371,9 +405,9 @@ export default function OrganizationSettings({
                             placeholder={t.namePlaceholder}
                             autoComplete="off"
                             className={`${inputClassName} ${fieldErrors.name
-                                ? errorClassName
-                                : ""
-                                } `}
+                                    ? errorClassName
+                                    : ""
+                                }`}
                         />
 
                         {fieldErrors.name && (
@@ -383,7 +417,6 @@ export default function OrganizationSettings({
                         )}
                     </div>
 
-                    {/* Organization slug */}
                     <div>
                         <label
                             htmlFor="organization-slug"
@@ -412,9 +445,9 @@ export default function OrganizationSettings({
                             placeholder={t.slugPlaceholder}
                             autoComplete="off"
                             className={`${inputClassName} ${fieldErrors.slug
-                                ? errorClassName
-                                : ""
-                                } `}
+                                    ? errorClassName
+                                    : ""
+                                }`}
                         />
 
                         {!isRegistered &&
@@ -472,7 +505,6 @@ export default function OrganizationSettings({
                     disabled={isRegistered}
                 />
 
-                {/* Business details */}
                 <div className="border-t border-gray-100 pt-6">
                     <div className="mb-5">
                         <h4 className="text-sm font-semibold text-gray-900">
@@ -485,7 +517,6 @@ export default function OrganizationSettings({
                     </div>
 
                     <div className="grid gap-5 md:grid-cols-2">
-                        {/* Legal name */}
                         <div>
                             <label
                                 htmlFor="legal-name"
@@ -511,9 +542,9 @@ export default function OrganizationSettings({
                                 }
                                 autoComplete="off"
                                 className={`${inputClassName} ${fieldErrors.legal_name
-                                    ? errorClassName
-                                    : ""
-                                    } `}
+                                        ? errorClassName
+                                        : ""
+                                    }`}
                             />
 
                             {fieldErrors.legal_name && (
@@ -523,7 +554,6 @@ export default function OrganizationSettings({
                             )}
                         </div>
 
-                        {/* Tax ID */}
                         <div>
                             <label
                                 htmlFor="tax-id"
@@ -554,9 +584,9 @@ export default function OrganizationSettings({
                                 }
                                 autoComplete="off"
                                 className={`${inputClassName} ${fieldErrors.tax_id
-                                    ? errorClassName
-                                    : ""
-                                    } `}
+                                        ? errorClassName
+                                        : ""
+                                    }`}
                             />
 
                             {fieldErrors.tax_id && (
@@ -566,7 +596,6 @@ export default function OrganizationSettings({
                             )}
                         </div>
 
-                        {/* Business type */}
                         <div>
                             <label
                                 htmlFor="business-type"
@@ -585,9 +614,9 @@ export default function OrganizationSettings({
                                     clearFieldError("business_type");
                                 }}
                                 className={`${selectClassName} ${fieldErrors.business_type
-                                    ? errorClassName
-                                    : ""
-                                    } `}
+                                        ? errorClassName
+                                        : ""
+                                    }`}
                             >
                                 <option value="company">
                                     {t.business.types.company}
@@ -609,7 +638,6 @@ export default function OrganizationSettings({
                             )}
                         </div>
 
-                        {/* Phone */}
                         <div>
                             <label
                                 htmlFor="phone-number"
@@ -634,9 +662,9 @@ export default function OrganizationSettings({
                                 }
                                 autoComplete="off"
                                 className={`${inputClassName} ${fieldErrors.phone_number
-                                    ? errorClassName
-                                    : ""
-                                    } `}
+                                        ? errorClassName
+                                        : ""
+                                    }`}
                             />
 
                             {fieldErrors.phone_number && (

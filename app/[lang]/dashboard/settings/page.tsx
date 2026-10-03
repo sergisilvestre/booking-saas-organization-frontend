@@ -1,4 +1,3 @@
-// SettingsPage.tsx
 import { getMessages } from "next-intl/server";
 import SettingsForm from "./SettingsForm";
 import SettingsWarnings from "./SettingsWarnings";
@@ -17,7 +16,6 @@ export default async function SettingsPage({ params }: Props) {
 
     const accountNeedsValidation = true;
     const paidBookingsNeedActivation = true;
-    const stripeOnboardingUrl = undefined;
 
     return (
         <div>
@@ -34,7 +32,6 @@ export default async function SettingsPage({ params }: Props) {
             <SettingsWarnings
                 accountNeedsValidation={accountNeedsValidation}
                 paidBookingsNeedActivation={paidBookingsNeedActivation}
-                stripeOnboardingUrl={stripeOnboardingUrl}
             />
 
             <SettingsForm

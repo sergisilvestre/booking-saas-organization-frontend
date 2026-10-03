@@ -10,6 +10,7 @@ import type {
     CalendarApi,
     DatesSetArg,
 } from "@fullcalendar/core/index.js";
+import { apiFetch } from "@/lib/api";
 
 type Props = {
     lang: string;
@@ -45,8 +46,6 @@ type CustomerForm = {
     email: string;
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
 const initialForm: BookingForm = {
     customerId: "",
     eventTypeId: "",
@@ -60,19 +59,6 @@ const initialCustomerForm: CustomerForm = {
     name: "",
     email: "",
 };
-
-function getAuthHeaders(): HeadersInit {
-    const token = localStorage.getItem("token");
-
-    return {
-        "Content-Type": "application/json",
-        ...(token
-            ? {
-                Authorization: `Bearer ${token}`,
-            }
-            : {}),
-    };
-}
 
 export default function CalendarPage({ lang }: Props) {
     const t = useTranslations("dashboard.calendar");
@@ -181,11 +167,8 @@ export default function CalendarPage({ lang }: Props) {
     useEffect(() => {
         async function loadEventTypes() {
             try {
-                const response = await fetch(
-                    `${API_URL}/api/organization/event-types`,
-                    {
-                        headers: getAuthHeaders(),
-                    },
+                const response = await apiFetch(
+                    "organization/event-types",
                 );
 
                 if (!response.ok) {
@@ -227,11 +210,10 @@ export default function CalendarPage({ lang }: Props) {
                     );
                 }
 
-                const response = await fetch(
-                    `${API_URL}/api/organization/customers?${params.toString()}`,
-                    {
-                        headers: getAuthHeaders(),
-                    },
+                const query = params.toString();
+
+                const response = await apiFetch(
+                    `organization/customers${query ? `?${query}` : ""}`,
                 );
 
                 if (!response.ok) {
@@ -303,12 +285,8 @@ export default function CalendarPage({ lang }: Props) {
                 email,
             });
 
-            const existsResponse = await fetch(
-                `${API_URL}/api/organization/customers/exists?${params.toString()}`,
-                {
-                    method: "GET",
-                    headers: getAuthHeaders(),
-                },
+            const existsResponse = await apiFetch(
+                `organization/customers/exists?${params.toString()}`,
             );
 
             if (!existsResponse.ok) {
@@ -330,11 +308,13 @@ export default function CalendarPage({ lang }: Props) {
             /*
              * Create the customer.
              */
-            const response = await fetch(
-                `${API_URL}/api/organization/customers`,
+            const response = await apiFetch(
+                "organization/customers",
                 {
                     method: "POST",
-                    headers: getAuthHeaders(),
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
                     body: JSON.stringify({
                         name,
                         email,
@@ -388,11 +368,13 @@ export default function CalendarPage({ lang }: Props) {
         };
 
         try {
-            const response = await fetch(
-                `${API_URL}/api/organization/bookings`,
+            const response = await apiFetch(
+                "organization/bookings",
                 {
                     method: "POST",
-                    headers: getAuthHeaders(),
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
                     body: JSON.stringify(payload),
                 },
             );
@@ -483,14 +465,11 @@ export default function CalendarPage({ lang }: Props) {
                         <button
                             type="button"
                             onClick={() =>
-                                changeView(
-                                    "dayGridMonth",
-                                )
+                                changeView("dayGridMonth")
                             }
-                            className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${currentView ===
-                                "dayGridMonth"
-                                ? "bg-white text-gray-900 shadow-sm"
-                                : "text-gray-600 hover:bg-white hover:text-gray-900"
+                            className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${currentView === "dayGridMonth"
+                                    ? "bg-white text-gray-900 shadow-sm"
+                                    : "text-gray-600 hover:bg-white hover:text-gray-900"
                                 }`}
                         >
                             {t("month")}
@@ -499,14 +478,11 @@ export default function CalendarPage({ lang }: Props) {
                         <button
                             type="button"
                             onClick={() =>
-                                changeView(
-                                    "timeGridWeek",
-                                )
+                                changeView("timeGridWeek")
                             }
-                            className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${currentView ===
-                                "timeGridWeek"
-                                ? "bg-white text-gray-900 shadow-sm"
-                                : "text-gray-600 hover:bg-white hover:text-gray-900"
+                            className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${currentView === "timeGridWeek"
+                                    ? "bg-white text-gray-900 shadow-sm"
+                                    : "text-gray-600 hover:bg-white hover:text-gray-900"
                                 }`}
                         >
                             {t("week")}
@@ -515,14 +491,11 @@ export default function CalendarPage({ lang }: Props) {
                         <button
                             type="button"
                             onClick={() =>
-                                changeView(
-                                    "timeGridDay",
-                                )
+                                changeView("timeGridDay")
                             }
-                            className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${currentView ===
-                                "timeGridDay"
-                                ? "bg-white text-gray-900 shadow-sm"
-                                : "text-gray-600 hover:bg-white hover:text-gray-900"
+                            className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${currentView === "timeGridDay"
+                                    ? "bg-white text-gray-900 shadow-sm"
+                                    : "text-gray-600 hover:bg-white hover:text-gray-900"
                                 }`}
                         >
                             {t("day")}
@@ -570,26 +543,18 @@ export default function CalendarPage({ lang }: Props) {
                         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-5">
                             <div>
                                 <h3 className="text-lg font-semibold text-gray-900">
-                                    {t(
-                                        "booking.title",
-                                    )}
+                                    {t("booking.title")}
                                 </h3>
 
                                 <p className="mt-1 text-sm text-gray-500">
-                                    {t(
-                                        "booking.subtitle",
-                                    )}
+                                    {t("booking.subtitle")}
                                 </p>
                             </div>
 
                             <button
                                 type="button"
-                                onClick={
-                                    closeBookingForm
-                                }
-                                aria-label={t(
-                                    "booking.close",
-                                )}
+                                onClick={closeBookingForm}
+                                aria-label={t("booking.close")}
                                 className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
                             >
                                 ×
@@ -601,32 +566,24 @@ export default function CalendarPage({ lang }: Props) {
                                 {/* Customer */}
                                 <div className="relative">
                                     <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                                        {t(
-                                            "booking.customer",
-                                        )}
+                                        {t("booking.customer")}
                                     </label>
 
                                     {selectedCustomer ? (
                                         <div className="flex items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2.5">
                                             <div>
                                                 <div className="text-sm font-medium text-gray-900">
-                                                    {
-                                                        selectedCustomer.name
-                                                    }
+                                                    {selectedCustomer.name}
                                                 </div>
 
                                                 <div className="text-xs text-gray-700">
-                                                    {
-                                                        selectedCustomer.email
-                                                    }
+                                                    {selectedCustomer.email}
                                                 </div>
                                             </div>
 
                                             <button
                                                 type="button"
-                                                onClick={
-                                                    removeCustomer
-                                                }
+                                                onClick={removeCustomer}
                                                 className="text-sm text-gray-500 hover:text-gray-900"
                                             >
                                                 ×
@@ -636,16 +593,10 @@ export default function CalendarPage({ lang }: Props) {
                                         <>
                                             <input
                                                 type="text"
-                                                value={
-                                                    customerSearch
-                                                }
-                                                onChange={(
-                                                    event,
-                                                ) => {
+                                                value={customerSearch}
+                                                onChange={(event) => {
                                                     setCustomerSearch(
-                                                        event
-                                                            .target
-                                                            .value,
+                                                        event.target.value,
                                                     );
 
                                                     setIsCustomerSearchOpen(
@@ -667,12 +618,9 @@ export default function CalendarPage({ lang }: Props) {
                                             {isCustomerSearchOpen && (
                                                 <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
                                                     <div className="max-h-60 overflow-y-auto">
-                                                        {customers.length >
-                                                            0 ? (
+                                                        {customers.length > 0 ? (
                                                             customers.map(
-                                                                (
-                                                                    customer,
-                                                                ) => (
+                                                                (customer) => (
                                                                     <button
                                                                         key={
                                                                             customer.id
@@ -732,21 +680,16 @@ export default function CalendarPage({ lang }: Props) {
                                         htmlFor="eventType"
                                         className="mb-1.5 block text-sm font-medium text-gray-700"
                                     >
-                                        {t(
-                                            "booking.eventType",
-                                        )}
+                                        {t("booking.eventType")}
                                     </label>
 
                                     <select
                                         id="eventType"
-                                        value={
-                                            form.eventTypeId
-                                        }
+                                        value={form.eventTypeId}
                                         onChange={(event) =>
                                             updateBookingForm(
                                                 "eventTypeId",
-                                                event.target
-                                                    .value,
+                                                event.target.value,
                                             )
                                         }
                                         required
@@ -758,22 +701,14 @@ export default function CalendarPage({ lang }: Props) {
                                             )}
                                         </option>
 
-                                        {eventTypes.map(
-                                            (eventType) => (
-                                                <option
-                                                    key={
-                                                        eventType.id
-                                                    }
-                                                    value={
-                                                        eventType.id
-                                                    }
-                                                >
-                                                    {
-                                                        eventType.name
-                                                    }
-                                                </option>
-                                            ),
-                                        )}
+                                        {eventTypes.map((eventType) => (
+                                            <option
+                                                key={eventType.id}
+                                                value={eventType.id}
+                                            >
+                                                {eventType.name}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
 
@@ -783,9 +718,7 @@ export default function CalendarPage({ lang }: Props) {
                                         htmlFor="date"
                                         className="mb-1.5 block text-sm font-medium text-gray-700"
                                     >
-                                        {t(
-                                            "booking.date",
-                                        )}
+                                        {t("booking.date")}
                                     </label>
 
                                     <input
@@ -795,8 +728,7 @@ export default function CalendarPage({ lang }: Props) {
                                         onChange={(event) =>
                                             updateBookingForm(
                                                 "date",
-                                                event.target
-                                                    .value,
+                                                event.target.value,
                                             )
                                         }
                                         required
@@ -811,25 +743,17 @@ export default function CalendarPage({ lang }: Props) {
                                             htmlFor="startTime"
                                             className="mb-1.5 block text-sm font-medium text-gray-700"
                                         >
-                                            {t(
-                                                "booking.startTime",
-                                            )}
+                                            {t("booking.startTime")}
                                         </label>
 
                                         <input
                                             id="startTime"
                                             type="time"
-                                            value={
-                                                form.startTime
-                                            }
-                                            onChange={(
-                                                event,
-                                            ) =>
+                                            value={form.startTime}
+                                            onChange={(event) =>
                                                 updateBookingForm(
                                                     "startTime",
-                                                    event
-                                                        .target
-                                                        .value,
+                                                    event.target.value,
                                                 )
                                             }
                                             required
@@ -842,25 +766,17 @@ export default function CalendarPage({ lang }: Props) {
                                             htmlFor="endTime"
                                             className="mb-1.5 block text-sm font-medium text-gray-700"
                                         >
-                                            {t(
-                                                "booking.endTime",
-                                            )}
+                                            {t("booking.endTime")}
                                         </label>
 
                                         <input
                                             id="endTime"
                                             type="time"
-                                            value={
-                                                form.endTime
-                                            }
-                                            onChange={(
-                                                event,
-                                            ) =>
+                                            value={form.endTime}
+                                            onChange={(event) =>
                                                 updateBookingForm(
                                                     "endTime",
-                                                    event
-                                                        .target
-                                                        .value,
+                                                    event.target.value,
                                                 )
                                             }
                                             required
@@ -875,9 +791,7 @@ export default function CalendarPage({ lang }: Props) {
                                         htmlFor="notes"
                                         className="mb-1.5 block text-sm font-medium text-gray-700"
                                     >
-                                        {t(
-                                            "booking.notes",
-                                        )}
+                                        {t("booking.notes")}
                                     </label>
 
                                     <textarea
@@ -887,8 +801,7 @@ export default function CalendarPage({ lang }: Props) {
                                         onChange={(event) =>
                                             updateBookingForm(
                                                 "notes",
-                                                event.target
-                                                    .value,
+                                                event.target.value,
                                             )
                                         }
                                         className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
@@ -900,14 +813,10 @@ export default function CalendarPage({ lang }: Props) {
                             <div className="flex items-center justify-end gap-3 border-t border-gray-200 px-6 py-4">
                                 <button
                                     type="button"
-                                    onClick={
-                                        closeBookingForm
-                                    }
+                                    onClick={closeBookingForm}
                                     className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
                                 >
-                                    {t(
-                                        "booking.cancel",
-                                    )}
+                                    {t("booking.cancel")}
                                 </button>
 
                                 <button
@@ -918,9 +827,7 @@ export default function CalendarPage({ lang }: Props) {
                                     }
                                     className="rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                    {t(
-                                        "booking.create",
-                                    )}
+                                    {t("booking.create")}
                                 </button>
                             </div>
                         </form>
@@ -943,46 +850,32 @@ export default function CalendarPage({ lang }: Props) {
                         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-5">
                             <div>
                                 <h3 className="text-lg font-semibold text-gray-900">
-                                    {t(
-                                        "customer.createTitle",
-                                    )}
+                                    {t("customer.createTitle")}
                                 </h3>
 
                                 <p className="mt-1 text-sm text-gray-500">
-                                    {t(
-                                        "customer.createSubtitle",
-                                    )}
+                                    {t("customer.createSubtitle")}
                                 </p>
                             </div>
 
                             <button
                                 type="button"
-                                onClick={
-                                    closeCreateCustomer
-                                }
-                                aria-label={t(
-                                    "customer.close",
-                                )}
+                                onClick={closeCreateCustomer}
+                                aria-label={t("customer.close")}
                                 className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
                             >
                                 ×
                             </button>
                         </div>
 
-                        <form
-                            onSubmit={
-                                handleCreateCustomer
-                            }
-                        >
+                        <form onSubmit={handleCreateCustomer}>
                             <div className="space-y-5 px-6 py-6">
                                 <div>
                                     <label
                                         htmlFor="newCustomerName"
                                         className="mb-1.5 block text-sm font-medium text-gray-700"
                                     >
-                                        {t(
-                                            "customer.name",
-                                        )}
+                                        {t("customer.name")}
                                     </label>
 
                                     <input
@@ -1006,9 +899,7 @@ export default function CalendarPage({ lang }: Props) {
                                         htmlFor="newCustomerEmail"
                                         className="mb-1.5 block text-sm font-medium text-gray-700"
                                     >
-                                        {t(
-                                            "customer.email",
-                                        )}
+                                        {t("customer.email")}
                                     </label>
 
                                     <input
@@ -1030,23 +921,17 @@ export default function CalendarPage({ lang }: Props) {
                             <div className="flex items-center justify-end gap-3 border-t border-gray-200 px-6 py-4">
                                 <button
                                     type="button"
-                                    onClick={
-                                        closeCreateCustomer
-                                    }
+                                    onClick={closeCreateCustomer}
                                     className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
                                 >
-                                    {t(
-                                        "customer.cancel",
-                                    )}
+                                    {t("customer.cancel")}
                                 </button>
 
                                 <button
                                     type="submit"
                                     className="rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800"
                                 >
-                                    {t(
-                                        "customer.create",
-                                    )}
+                                    {t("customer.create")}
                                 </button>
                             </div>
                         </form>

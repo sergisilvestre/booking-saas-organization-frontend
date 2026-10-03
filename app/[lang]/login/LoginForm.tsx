@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { apiFetch } from "@/lib/api";
 
 type Props = {
     lang: string;
@@ -18,38 +19,35 @@ export default function LoginForm({ lang }: Props) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    async function handleSubmit(
+        event: FormEvent<HTMLFormElement>,
+    ) {
         event.preventDefault();
 
         setError("");
         setLoading(true);
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-        if (!apiUrl) {
-            setError(t("errors.apiNotConfigured"));
-            setLoading(false);
-            return;
-        }
-
         try {
-            const response = await fetch(`${apiUrl}/api/auth/organization/login`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
+            const response = await apiFetch(
+                "auth/organization/login",
+                {
+                    method: "POST",
+                    auth: false,
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        email,
+                        password,
+                    }),
                 },
-                body: JSON.stringify({
-                    email,
-                    password,
-                }),
-            });
+            );
 
             const data = await response.json();
 
             if (!response.ok) {
                 throw new Error(
-                    data?.message || t("errors.default")
+                    data?.message || t("errors.default"),
                 );
             }
 
@@ -87,7 +85,9 @@ export default function LoginForm({ lang }: Props) {
                     type="email"
                     autoComplete="email"
                     value={email}
-                    onChange={(event) => setEmail(event.target.value)}
+                    onChange={(event) =>
+                        setEmail(event.target.value)
+                    }
                     placeholder={t("emailPlaceholder")}
                     required
                     className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
@@ -117,7 +117,9 @@ export default function LoginForm({ lang }: Props) {
                     type="password"
                     autoComplete="current-password"
                     value={password}
-                    onChange={(event) => setPassword(event.target.value)}
+                    onChange={(event) =>
+                        setPassword(event.target.value)
+                    }
                     placeholder={t("passwordPlaceholder")}
                     required
                     className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
@@ -138,7 +140,9 @@ export default function LoginForm({ lang }: Props) {
                 disabled={loading}
                 className="w-full rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
-                {loading ? t("loading") : t("submit")}
+                {loading
+                    ? t("loading")
+                    : t("submit")}
             </button>
         </form>
     );

@@ -168,7 +168,8 @@
     },
     "dashboard": {
         "account": {
-            "logout": "Logout"
+            "logout": "Logout",
+            "loggingOut": "Logging out..."
         },
         "title": "Dashboard",
         "subtitle": "Manage your bookings and organization.",

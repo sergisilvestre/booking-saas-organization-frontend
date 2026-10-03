@@ -162,7 +162,8 @@
     },
     "dashboard": {
         "account": {
-            "logout": "Cerrar sesión"
+            "logout": "Cerrar sesión",
+            "loggingOut": "Cerrando sesión..."
         },
         "title": "Panel",
         "subtitle": "Gestiona tus reservas y tu organización.",

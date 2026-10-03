@@ -167,7 +167,8 @@
     },
     "dashboard": {
         "account": {
-            "logout": "Tancar sessió"
+            "logout": "Tancar sessió",
+            "loggingOut": "Tancant sessió..."
         },
         "title": "Tauler",
         "subtitle": "Gestiona les teves reserves i la teva organització.",

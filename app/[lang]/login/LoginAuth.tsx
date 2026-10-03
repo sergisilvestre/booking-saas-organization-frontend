@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { apiFetch } from "@/lib/api";
 
 type Props = {
     lang: string;
@@ -16,39 +17,18 @@ export default function LoginAuth({
     const [checking, setChecking] = useState(true);
 
     useEffect(() => {
-        let mounted = true;
-
         async function checkAuth() {
             const token = localStorage.getItem("token");
 
             if (!token) {
-                if (mounted) {
-                    setChecking(false);
-                }
-
-                return;
-            }
-
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-            if (!apiUrl) {
-                localStorage.removeItem("token");
-
-                if (mounted) {
-                    setChecking(false);
-                }
-
+                setChecking(false);
                 return;
             }
 
             try {
-                const response = await fetch(`${apiUrl}/api/organization/auth/me`, {
-                    method: "GET",
-                    headers: {
-                        Accept: "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
+                const response = await apiFetch(
+                    "organization/auth/me",
+                );
 
                 if (response.ok) {
                     router.replace(`/${lang}/dashboard`);
@@ -59,24 +39,16 @@ export default function LoginAuth({
                     localStorage.removeItem("token");
                 }
 
-                if (mounted) {
-                    setChecking(false);
-                }
+                setChecking(false);
             } catch {
                 /*
-                 * No eliminamos el token ante un error de red.
+                 * Do not remove the token on network errors.
                  */
-                if (mounted) {
-                    setChecking(false);
-                }
+                setChecking(false);
             }
         }
 
         checkAuth();
-
-        return () => {
-            mounted = false;
-        };
     }, [lang, router]);
 
     if (checking) {

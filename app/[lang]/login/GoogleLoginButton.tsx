@@ -1,5 +1,7 @@
 "use client";
 
+import { apiUrl } from "@/lib/api";
+
 type Props = {
     lang: string;
     label: string;
@@ -10,14 +12,13 @@ export default function GoogleLoginButton({
     label,
 }: Props) {
     function handleGoogleLogin() {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        const url = new URL(
+            apiUrl("auth/google/redirect"),
+        );
 
-        if (!apiUrl) {
-            return;
-        }
+        url.searchParams.set("locale", lang);
 
-        window.location.href =
-            `${apiUrl}/api/auth/google/redirect?locale=${encodeURIComponent(lang)}`;
+        window.location.href = url.toString();
     }
 
     return (

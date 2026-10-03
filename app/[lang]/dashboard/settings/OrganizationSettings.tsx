@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import TimezoneField from "@/components/TimezoneField";
+import { apiFetch } from "@/lib/api";
 
 type Translations = {
     title: string;
@@ -79,27 +80,9 @@ export default function OrganizationSettings({
             setOrganizationSlugAvailability("checking");
 
             try {
-                const token = localStorage.getItem("token");
-
-                const apiUrl = (
-                    process.env.NEXT_PUBLIC_API_URL ?? ""
-                ).replace(/\/$/, "");
-
-                const url =
-                    `${apiUrl}/api/organization/check-slug?slug=` +
-                    encodeURIComponent(slug);
-
-                const response = await fetch(url, {
-                    method: "GET",
-                    headers: {
-                        Accept: "application/json",
-                        ...(token
-                            ? {
-                                Authorization: `Bearer ${token}`,
-                            }
-                            : {}),
-                    },
-                });
+                const response = await apiFetch(
+                    `organization/check-slug?slug=${encodeURIComponent(slug)}`
+                );
 
                 if (!response.ok) {
                     setOrganizationSlugAvailability("idle");
@@ -191,36 +174,21 @@ export default function OrganizationSettings({
         setIsSaving(true);
 
         try {
-            const token = localStorage.getItem("token");
-
-            const apiUrl = (
-                process.env.NEXT_PUBLIC_API_URL ?? ""
-            ).replace(/\/$/, "");
-
-            const response = await fetch(
-                `${apiUrl}/api/organization/register`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Accept: "application/json",
-                        ...(token
-                            ? {
-                                Authorization: `Bearer ${token}`,
-                            }
-                            : {}),
-                    },
-                    body: JSON.stringify({
-                        name: organizationName.trim(),
-                        slug: organizationSlug.trim(),
-                        timezone,
-                        legal_name: legalName.trim(),
-                        tax_id: taxId.trim(),
-                        business_type: businessType,
-                        phone_number: phoneNumber.trim(),
-                    }),
-                }
-            );
+            const response = await apiFetch("organization/register", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    name: organizationName.trim(),
+                    slug: organizationSlug.trim(),
+                    timezone,
+                    legal_name: legalName.trim(),
+                    tax_id: taxId.trim(),
+                    business_type: businessType,
+                    phone_number: phoneNumber.trim(),
+                }),
+            });
 
             const data = await response.json().catch(() => null);
 
@@ -302,8 +270,8 @@ export default function OrganizationSettings({
                             placeholder={t.namePlaceholder}
                             autoComplete="off"
                             className={`${inputClassName} ${fieldErrors.name
-                                    ? errorClassName
-                                    : ""
+                                ? errorClassName
+                                : ""
                                 }`}
                         />
 
@@ -340,8 +308,8 @@ export default function OrganizationSettings({
                             placeholder={t.slugPlaceholder}
                             autoComplete="off"
                             className={`${inputClassName} ${fieldErrors.slug
-                                    ? errorClassName
-                                    : ""
+                                ? errorClassName
+                                : ""
                                 }`}
                         />
 
@@ -431,8 +399,8 @@ export default function OrganizationSettings({
                                 }
                                 autoComplete="off"
                                 className={`${inputClassName} ${fieldErrors.legal_name
-                                        ? errorClassName
-                                        : ""
+                                    ? errorClassName
+                                    : ""
                                     }`}
                             />
 
@@ -466,8 +434,8 @@ export default function OrganizationSettings({
                                 }
                                 autoComplete="off"
                                 className={`${inputClassName} ${fieldErrors.tax_id
-                                        ? errorClassName
-                                        : ""
+                                    ? errorClassName
+                                    : ""
                                     }`}
                             />
 
@@ -496,8 +464,8 @@ export default function OrganizationSettings({
                                     clearFieldError("business_type");
                                 }}
                                 className={`${selectClassName} ${fieldErrors.business_type
-                                        ? errorClassName
-                                        : ""
+                                    ? errorClassName
+                                    : ""
                                     }`}
                             >
                                 <option value="company">
@@ -543,8 +511,8 @@ export default function OrganizationSettings({
                                 }
                                 autoComplete="off"
                                 className={`${inputClassName} ${fieldErrors.phone_number
-                                        ? errorClassName
-                                        : ""
+                                    ? errorClassName
+                                    : ""
                                     }`}
                             />
 

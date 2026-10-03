@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { apiFetch } from "@/lib/api";
 
 type Props = {
     lang: string;
@@ -44,7 +45,6 @@ export default function SidebarAccount({ lang }: Props) {
                 return;
             }
 
-            // Load cached user immediately
             const cachedUser = localStorage.getItem(USER_STORAGE_KEY);
 
             if (cachedUser) {
@@ -55,26 +55,8 @@ export default function SidebarAccount({ lang }: Props) {
                 }
             }
 
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-            if (!apiUrl) {
-                localStorage.removeItem("token");
-                localStorage.removeItem(USER_STORAGE_KEY);
-                router.replace(`/${lang}/login`);
-                return;
-            }
-
             try {
-                const response = await fetch(
-                    `${apiUrl}/api/organization/auth/me`,
-                    {
-                        method: "GET",
-                        headers: {
-                            Accept: "application/json",
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }
-                );
+                const response = await apiFetch("organization/auth/me");
 
                 if (!response.ok) {
                     localStorage.removeItem("token");
@@ -89,21 +71,11 @@ export default function SidebarAccount({ lang }: Props) {
 
                 setUser(authenticatedUser);
 
-                // Keep the latest user data in localStorage
                 localStorage.setItem(
                     USER_STORAGE_KEY,
                     JSON.stringify(authenticatedUser)
                 );
 
-                /*
-                 * Organization onboarding
-                 *
-                 * The backend is the source of truth.
-                 *
-                 * If the authenticated user does not have an
-                 * organization yet, send them to settings where
-                 * the organization can be created.
-                 */
                 if (
                     authenticatedUser.organization === null &&
                     authenticatedUser.onboarding?.status ===
@@ -129,21 +101,12 @@ export default function SidebarAccount({ lang }: Props) {
     }, [lang, pathname, router]);
 
     async function handleLogout() {
-        const token = localStorage.getItem("token");
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
         try {
             setLoggingOut(true);
 
-            if (token && apiUrl) {
-                await fetch(`${apiUrl}/api/auth/logout`, {
-                    method: "POST",
-                    headers: {
-                        Accept: "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-            }
+            await apiFetch("auth/logout", {
+                method: "POST",
+            });
         } finally {
             localStorage.removeItem("token");
             localStorage.removeItem(USER_STORAGE_KEY);

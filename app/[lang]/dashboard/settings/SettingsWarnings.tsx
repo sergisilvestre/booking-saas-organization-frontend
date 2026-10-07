@@ -1,27 +1,29 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { apiFetch } from "@/lib/api";
 
-type Props = {
-    accountNeedsValidation: boolean;
-    paidBookingsNeedActivation: boolean;
-};
-
 type StoredUser = {
+    role?: string;
     onboarding?: {
         status?: string;
+    };
+    organization?: {
+        name?: string;
+        slug?: string;
+    };
+    features?: {
+        payments?: boolean;
     };
 };
 
 const USER_STORAGE_KEY = "user";
 
-export default function SettingsWarnings({
-    accountNeedsValidation,
-    paidBookingsNeedActivation,
-}: Props) {
-    const [onboardingNeedsValidation, setOnboardingNeedsValidation] =
-        useState(accountNeedsValidation);
+export default function SettingsWarnings() {
+    const t = useTranslations("dashboard.settings.warnings");
+
+    const [user, setUser] = useState<StoredUser | null>(null);
 
     const [stripeOnboardingUrl, setStripeOnboardingUrl] = useState<
         string | null
@@ -30,62 +32,92 @@ export default function SettingsWarnings({
     const [loadingStripe, setLoadingStripe] = useState(false);
 
     useEffect(() => {
-        const loadOnboardingStatus = async () => {
+        const loadUser = async () => {
             try {
-                const response = await apiFetch(
-                    "organization/auth/me"
-                );
+                const response = await apiFetch("organization/auth/me");
 
-                if (!response.ok) {
-                    setOnboardingNeedsValidation(
-                        accountNeedsValidation
+                if (response.ok) {
+                    const data = await response.json();
+                    const currentUser: StoredUser = data.data ?? data;
+
+                    localStorage.setItem(
+                        USER_STORAGE_KEY,
+                        JSON.stringify(currentUser)
                     );
+
+                    setUser(currentUser);
+
                     return;
                 }
 
-                const data = await response.json();
-                const user: StoredUser = data.data ?? data;
-
-                localStorage.setItem(
-                    USER_STORAGE_KEY,
-                    JSON.stringify(user)
+                const storedUser = localStorage.getItem(
+                    USER_STORAGE_KEY
                 );
 
-                setOnboardingNeedsValidation(
-                    user.onboarding?.status !== "complete"
-                );
+                if (!storedUser) {
+                    setUser(null);
+                    return;
+                }
+
+                try {
+                    const currentUser: StoredUser =
+                        JSON.parse(storedUser);
+
+                    setUser(currentUser);
+                } catch {
+                    setUser(null);
+                }
             } catch (error) {
-                console.error(
-                    "Unable to load onboarding status:",
-                    error
+                console.error("Unable to load user:", error);
+
+                const storedUser = localStorage.getItem(
+                    USER_STORAGE_KEY
                 );
 
-                setOnboardingNeedsValidation(
-                    accountNeedsValidation
-                );
+                if (!storedUser) {
+                    setUser(null);
+                    return;
+                }
+
+                try {
+                    const currentUser: StoredUser =
+                        JSON.parse(storedUser);
+
+                    setUser(currentUser);
+                } catch {
+                    setUser(null);
+                }
             }
         };
 
-        loadOnboardingStatus();
+        loadUser();
 
         window.addEventListener(
             "organization-registered",
-            loadOnboardingStatus
+            loadUser
         );
 
         return () => {
             window.removeEventListener(
                 "organization-registered",
-                loadOnboardingStatus
+                loadUser
             );
         };
-    }, [accountNeedsValidation]);
+    }, []);
+
+    const onboardingNeedsValidation =
+        user?.onboarding !== undefined &&
+        user.onboarding.status !== "complete";
+
+    const showStripeWarning =
+        user?.role === "owner" &&
+        user.organization !== undefined &&
+        user.onboarding?.status === "complete" &&
+        user.features?.payments !== true;
 
     useEffect(() => {
-        if (
-            !paidBookingsNeedActivation ||
-            onboardingNeedsValidation
-        ) {
+        if (!showStripeWarning) {
+            setStripeOnboardingUrl(null);
             return;
         }
 
@@ -125,15 +157,9 @@ export default function SettingsWarnings({
         };
 
         loadStripeOnboardingUrl();
-    }, [
-        onboardingNeedsValidation,
-        paidBookingsNeedActivation,
-    ]);
+    }, [showStripeWarning]);
 
-    if (
-        !onboardingNeedsValidation &&
-        !paidBookingsNeedActivation
-    ) {
+    if (!onboardingNeedsValidation && !showStripeWarning) {
         return null;
     }
 
@@ -148,48 +174,24 @@ export default function SettingsWarnings({
 
                         <div>
                             <p className="text-sm font-semibold text-amber-900">
-                                Validate your account
+                                {t("account.title")}
                             </p>
 
                             <p className="mt-1 text-sm text-amber-800">
-                                Complete your account information to
-                                unlock all features.
+                                {t("account.description")}
                             </p>
                         </div>
                     </div>
                 </div>
             )}
 
-            {paidBookingsNeedActivation &&
-                !onboardingNeedsValidation && (
-                    <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
-                        {stripeOnboardingUrl ? (
-                            <a
-                                href={stripeOnboardingUrl}
-                                className="block w-full cursor-pointer text-left"
-                            >
-                                <div className="flex items-start gap-3">
-                                    <div className="mt-0.5 font-bold text-blue-600">
-                                        !
-                                    </div>
-
-                                    <div>
-                                        <p className="text-sm font-semibold text-blue-900">
-                                            Activate paid bookings
-                                        </p>
-
-                                        <p className="mt-1 text-sm text-blue-800">
-                                            Connect Stripe to start
-                                            accepting paid bookings.
-                                        </p>
-
-                                        <p className="mt-2 text-sm font-semibold text-blue-900">
-                                            Click here to continue →
-                                        </p>
-                                    </div>
-                                </div>
-                            </a>
-                        ) : (
+            {showStripeWarning && (
+                <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+                    {stripeOnboardingUrl ? (
+                        <a
+                            href={stripeOnboardingUrl}
+                            className="block w-full cursor-pointer text-left"
+                        >
                             <div className="flex items-start gap-3">
                                 <div className="mt-0.5 font-bold text-blue-600">
                                     !
@@ -197,24 +199,44 @@ export default function SettingsWarnings({
 
                                 <div>
                                     <p className="text-sm font-semibold text-blue-900">
-                                        Activate paid bookings
+                                        {t("stripe.title")}
                                     </p>
 
                                     <p className="mt-1 text-sm text-blue-800">
-                                        Connect Stripe to start
-                                        accepting paid bookings.
+                                        {t("stripe.description")}
                                     </p>
 
-                                    {loadingStripe && (
-                                        <p className="mt-2 text-sm font-semibold text-blue-900">
-                                            Preparing Stripe...
-                                        </p>
-                                    )}
+                                    <p className="mt-2 text-sm font-semibold text-blue-900">
+                                        {t("stripe.action")} →
+                                    </p>
                                 </div>
                             </div>
-                        )}
-                    </div>
-                )}
+                        </a>
+                    ) : (
+                        <div className="flex items-start gap-3">
+                            <div className="mt-0.5 font-bold text-blue-600">
+                                !
+                            </div>
+
+                            <div>
+                                <p className="text-sm font-semibold text-blue-900">
+                                    {t("stripe.title")}
+                                </p>
+
+                                <p className="mt-1 text-sm text-blue-800">
+                                    {t("stripe.description")}
+                                </p>
+
+                                {loadingStripe && (
+                                    <p className="mt-2 text-sm font-semibold text-blue-900">
+                                        {t("stripe.loading")}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

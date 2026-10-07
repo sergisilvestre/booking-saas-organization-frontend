@@ -1,6 +1,6 @@
 import { getMessages } from "next-intl/server";
 import SettingsForm from "./SettingsForm";
-import SettingsWarnings from "./SettingsWarnings";
+// import SettingsWarnings from "./SettingsWarnings";
 
 type Props = {
     params: Promise<{
@@ -29,10 +29,10 @@ export default async function SettingsPage({ params }: Props) {
                 </p>
             </div>
 
-            <SettingsWarnings
+            {/* <SettingsWarnings
                 accountNeedsValidation={accountNeedsValidation}
                 paidBookingsNeedActivation={paidBookingsNeedActivation}
-            />
+            /> */}
 
             <SettingsForm
                 translations={translations}

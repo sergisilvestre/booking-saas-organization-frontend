@@ -160,6 +160,11 @@
         "privacy": "Política de privacidad",
         "loading": "Iniciando sesión..."
     },
+    "googleCallback": {
+        "title": "Iniciando sesión",
+        "description": "Espera mientras terminamos de configurar tu cuenta.",
+        "secureAuthentication": "Autenticación segura"
+    },
     "dashboard": {
         "account": {
             "logout": "Cerrar sesión",
@@ -375,6 +380,18 @@
                 "title": "Zona de peligro",
                 "description": "Las acciones de esta sección pueden afectar permanentemente a tu cuenta.",
                 "delete": "Eliminar cuenta"
+            },
+            "warnings": {
+                "account": {
+                    "title": "Valida tu cuenta",
+                    "description": "Completa la información de tu cuenta para desbloquear todas las funciones."
+                },
+                "stripe": {
+                    "title": "Activa las reservas de pago",
+                    "description": "Conecta Stripe para empezar a aceptar reservas de pago.",
+                    "action": "Haz clic aquí para continuar",
+                    "loading": "Preparando Stripe..."
+                }
             }
         }
     }

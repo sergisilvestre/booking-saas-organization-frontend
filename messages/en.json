@@ -166,6 +166,11 @@
         "privacy": "Privacy Policy",
         "loading": "Logging in..."
     },
+    "googleCallback": {
+        "title": "Signing you in",
+        "description": "Please wait while we finish setting up your account.",
+        "secureAuthentication": "Secure authentication"
+    },
     "dashboard": {
         "account": {
             "logout": "Logout",
@@ -381,6 +386,18 @@
                 "title": "Danger zone",
                 "description": "Actions in this section may permanently affect your account.",
                 "delete": "Delete account"
+            },
+            "warnings": {
+                "account": {
+                    "title": "Validate your account",
+                    "description": "Complete your account information to unlock all features."
+                },
+                "stripe": {
+                    "title": "Activate paid bookings",
+                    "description": "Connect Stripe to start accepting paid bookings.",
+                    "action": "Click here to continue",
+                    "loading": "Preparing Stripe..."
+                }
             }
         }
     }

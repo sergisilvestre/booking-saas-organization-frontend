@@ -165,6 +165,11 @@
         "privacy": "Política de privacitat",
         "loading": "Iniciant sessió..."
     },
+    "googleCallback": {
+        "title": "Iniciant sessió",
+        "description": "Espera mentre acabem de configurar el teu compte.",
+        "secureAuthentication": "Autenticació segura"
+    },
     "dashboard": {
         "account": {
             "logout": "Tancar sessió",
@@ -380,6 +385,18 @@
                 "title": "Zona de perill",
                 "description": "Les accions d'aquesta secció poden afectar permanentment el teu compte.",
                 "delete": "Eliminar el compte"
+            },
+            "warnings": {
+                "account": {
+                    "title": "Valida el teu compte",
+                    "description": "Completa la informació del teu compte per desbloquejar totes les funcions."
+                },
+                "stripe": {
+                    "title": "Activa les reserves de pagament",
+                    "description": "Connecta Stripe per començar a acceptar reserves de pagament.",
+                    "action": "Fes clic aquí per continuar",
+                    "loading": "Preparant Stripe..."
+                }
             }
         }
     }

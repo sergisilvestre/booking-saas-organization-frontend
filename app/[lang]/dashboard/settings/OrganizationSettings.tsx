@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import TimezoneField from "@/components/TimezoneField";
+
 import { apiFetch } from "@/lib/api";
 
 type Translations = {
@@ -42,13 +43,33 @@ type OrganizationSlugAvailability =
     | "available"
     | "unavailable";
 
+type StoredUser = {
+    name?: string;
+    email?: string;
+    organization?: {
+        name?: string;
+        slug?: string;
+        timezone?: string;
+        legalName?: string;
+        legal_name?: string;
+        taxId?: string;
+        tax_id?: string;
+        businessType?: string;
+        business_type?: string;
+        phoneNumber?: string;
+        phone_number?: string;
+    };
+};
+
+const USER_STORAGE_KEY = "user";
+
 const MIN_ORGANIZATION_NAME_LENGTH = 5;
 const MAX_ORGANIZATION_NAME_LENGTH = 100;
 
 const MIN_SLUG_LENGTH = 5;
 const MAX_SLUG_LENGTH = 50;
 
-const MIN_LEGAL_NAME_LENGTH = 2;
+const MIN_LEGAL_NAME_LENGTH = 5;
 const MAX_LEGAL_NAME_LENGTH = 150;
 
 const MIN_TAX_ID_LENGTH = 8;
@@ -58,19 +79,23 @@ const MIN_PHONE_LENGTH = 9;
 const MAX_PHONE_LENGTH = 20;
 
 const SLUG_REGEX = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
+
 const DNI_REGEX = /^\d{8}[A-Z]$/;
 const NIE_REGEX = /^[XYZ]\d{7}[A-Z]$/;
 const CIF_REGEX = /^[ABCDEFGHJNPQRSUVW]\d{7}[0-9A-J]$/;
+
 const PHONE_REGEX = /^\+?[0-9][0-9\s().-]{7,18}[0-9]$/;
 
 export default function OrganizationSettings({
     translations: t,
 }: Props) {
+    const [userName, setUserName] = useState("");
+    const [userEmail, setUserEmail] = useState("");
+
     const [timezone, setTimezone] = useState("Europe/Madrid");
 
     const [organizationName, setOrganizationName] = useState("");
     const [organizationSlug, setOrganizationSlug] = useState("");
-
     const [organizationSlugAvailability, setOrganizationSlugAvailability] =
         useState<OrganizationSlugAvailability>("idle");
 
@@ -86,19 +111,34 @@ export default function OrganizationSettings({
 
     const [isSaving, setIsSaving] = useState(false);
     const [isRegistered, setIsRegistered] = useState(false);
+    const [isInitialized, setIsInitialized] = useState(false);
 
     useEffect(() => {
         try {
-            const storedUser = localStorage.getItem("user");
+            const storedUser = localStorage.getItem(USER_STORAGE_KEY);
 
             if (!storedUser) {
                 return;
             }
 
             const parsed = JSON.parse(storedUser);
-            const user = parsed.data ?? parsed;
+
+            const user: StoredUser =
+                parsed?.data ?? parsed;
+
+            /*
+             * User fields must be loaded independently from
+             * organization fields.
+             */
+            setUserName(user?.name ?? "");
+            setUserEmail(user?.email ?? "");
+
             const organization = user?.organization;
 
+            /*
+             * User may not have an organization yet.
+             * Do not return before loading user fields.
+             */
             if (!organization) {
                 return;
             }
@@ -106,16 +146,39 @@ export default function OrganizationSettings({
             setOrganizationName(organization.name ?? "");
             setOrganizationSlug(organization.slug ?? "");
             setTimezone(organization.timezone ?? "Europe/Madrid");
-            setLegalName(organization.legalName ?? "");
-            setTaxId(organization.taxId ?? "");
-            setBusinessType(organization.businessType ?? "company");
-            setPhoneNumber(organization.phoneNumber ?? "");
+
+            setLegalName(
+                organization.legalName ??
+                organization.legal_name ??
+                ""
+            );
+
+            setTaxId(
+                organization.taxId ??
+                organization.tax_id ??
+                ""
+            );
+
+            setBusinessType(
+                organization.businessType ??
+                organization.business_type ??
+                "company"
+            );
+
+            setPhoneNumber(
+                organization.phoneNumber ??
+                organization.phone_number ??
+                ""
+            );
+
             setIsRegistered(true);
         } catch (error) {
             console.error(
-                "Failed to load organization from localStorage:",
+                "Failed to load user/organization from localStorage:",
                 error
             );
+        } finally {
+            setIsInitialized(true);
         }
     }, []);
 
@@ -142,7 +205,9 @@ export default function OrganizationSettings({
 
             try {
                 const response = await apiFetch(
-                    `organization/onboarding/check-slug?slug=${encodeURIComponent(slug)}`
+                    `organization/onboarding/check-slug?slug=${encodeURIComponent(
+                        slug
+                    )}`
                 );
 
                 if (!response.ok) {
@@ -172,15 +237,6 @@ export default function OrganizationSettings({
         };
     }, [organizationSlug]);
 
-    const clearFieldError = (field: string) => {
-        setFieldErrors((current) => ({
-            ...current,
-            [field]: "",
-        }));
-
-        setSaveError(null);
-    };
-
     const validateForm = () => {
         const errors: Record<string, string> = {};
 
@@ -193,17 +249,21 @@ export default function OrganizationSettings({
         if (!name) {
             errors.name = "Organization name is required.";
         } else if (name.length < MIN_ORGANIZATION_NAME_LENGTH) {
-            errors.name = `Organization name must be at least ${MIN_ORGANIZATION_NAME_LENGTH} characters.`;
+            errors.name =
+                `Organization name must be at least ${MIN_ORGANIZATION_NAME_LENGTH} characters.`;
         } else if (name.length > MAX_ORGANIZATION_NAME_LENGTH) {
-            errors.name = `Organization name must not exceed ${MAX_ORGANIZATION_NAME_LENGTH} characters.`;
+            errors.name =
+                `Organization name must not exceed ${MAX_ORGANIZATION_NAME_LENGTH} characters.`;
         }
 
         if (!slug) {
             errors.slug = "Organization slug is required.";
         } else if (slug.length < MIN_SLUG_LENGTH) {
-            errors.slug = `Organization slug must be at least ${MIN_SLUG_LENGTH} characters.`;
+            errors.slug =
+                `Organization slug must be at least ${MIN_SLUG_LENGTH} characters.`;
         } else if (slug.length > MAX_SLUG_LENGTH) {
-            errors.slug = `Organization slug must not exceed ${MAX_SLUG_LENGTH} characters.`;
+            errors.slug =
+                `Organization slug must not exceed ${MAX_SLUG_LENGTH} characters.`;
         } else if (!SLUG_REGEX.test(slug)) {
             errors.slug =
                 "Organization slug can only contain lowercase letters, numbers and hyphens.";
@@ -217,9 +277,11 @@ export default function OrganizationSettings({
         if (!legalNameValue) {
             errors.legal_name = "Legal name is required.";
         } else if (legalNameValue.length < MIN_LEGAL_NAME_LENGTH) {
-            errors.legal_name = `Legal name must be at least ${MIN_LEGAL_NAME_LENGTH} characters.`;
+            errors.legal_name =
+                `Legal name must be at least ${MIN_LEGAL_NAME_LENGTH} characters.`;
         } else if (legalNameValue.length > MAX_LEGAL_NAME_LENGTH) {
-            errors.legal_name = `Legal name must not exceed ${MAX_LEGAL_NAME_LENGTH} characters.`;
+            errors.legal_name =
+                `Legal name must not exceed ${MAX_LEGAL_NAME_LENGTH} characters.`;
         }
 
         if (!taxIdValue) {
@@ -228,7 +290,8 @@ export default function OrganizationSettings({
             taxIdValue.length < MIN_TAX_ID_LENGTH ||
             taxIdValue.length > MAX_TAX_ID_LENGTH
         ) {
-            errors.tax_id = `Tax ID must be between ${MIN_TAX_ID_LENGTH} and ${MAX_TAX_ID_LENGTH} characters.`;
+            errors.tax_id =
+                `Tax ID must be between ${MIN_TAX_ID_LENGTH} and ${MAX_TAX_ID_LENGTH} characters.`;
         } else if (
             !DNI_REGEX.test(taxIdValue) &&
             !NIE_REGEX.test(taxIdValue) &&
@@ -241,7 +304,9 @@ export default function OrganizationSettings({
         if (!businessType) {
             errors.business_type = "Business type is required.";
         } else if (
-            !["company", "individual", "non_profit"].includes(businessType)
+            !["company", "individual", "non_profit"].includes(
+                businessType
+            )
         ) {
             errors.business_type = "Invalid business type.";
         }
@@ -258,7 +323,8 @@ export default function OrganizationSettings({
                 normalizedPhone.length < MIN_PHONE_LENGTH ||
                 normalizedPhone.length > MAX_PHONE_LENGTH
             ) {
-                errors.phone_number = `Phone number must be between ${MIN_PHONE_LENGTH} and ${MAX_PHONE_LENGTH} digits.`;
+                errors.phone_number =
+                    `Phone number must be between ${MIN_PHONE_LENGTH} and ${MAX_PHONE_LENGTH} digits.`;
             } else if (!PHONE_REGEX.test(phoneValue)) {
                 errors.phone_number =
                     "Please enter a valid phone number.";
@@ -269,6 +335,27 @@ export default function OrganizationSettings({
 
         return Object.keys(errors).length === 0;
     };
+
+    /*
+     * Validate automatically whenever a form value changes.
+     */
+    useEffect(() => {
+        if (!isInitialized || isRegistered) {
+            return;
+        }
+
+        validateForm();
+    }, [
+        isInitialized,
+        isRegistered,
+        organizationName,
+        organizationSlug,
+        organizationSlugAvailability,
+        legalName,
+        taxId,
+        businessType,
+        phoneNumber,
+    ]);
 
     const handleSave = async () => {
         if (isRegistered) {
@@ -308,7 +395,9 @@ export default function OrganizationSettings({
             if (!response.ok) {
                 if (response.status === 422) {
                     const backendErrors =
-                        data?.errors ?? data?.data?.errors ?? {};
+                        data?.errors ??
+                        data?.data?.errors ??
+                        {};
 
                     setFieldErrors(backendErrors);
 
@@ -330,16 +419,23 @@ export default function OrganizationSettings({
              * Refresh the authenticated user so the new
              * organization/onboarding state is stored locally.
              */
-            const meResponse = await apiFetch("organization/auth/me");
+            const meResponse = await apiFetch(
+                "organization/auth/me"
+            );
 
             if (meResponse.ok) {
                 const meData = await meResponse.json();
-                const updatedUser = meData.data ?? meData;
+
+                const updatedUser =
+                    meData.data ?? meData;
 
                 localStorage.setItem(
-                    "user",
+                    USER_STORAGE_KEY,
                     JSON.stringify(updatedUser)
                 );
+
+                setUserName(updatedUser?.name ?? "");
+                setUserEmail(updatedUser?.email ?? "");
             }
 
             setIsRegistered(true);
@@ -382,118 +478,125 @@ export default function OrganizationSettings({
             </div>
 
             <div className="space-y-6">
-                <div className="grid gap-5 md:grid-cols-2">
-                    <div>
-                        <label
-                            htmlFor="organization-name"
-                            className="mb-2 block text-sm font-medium text-gray-700"
-                        >
-                            {t.name}
-                        </label>
+                {/* Organization */}
+                <div>
+                    <div className="grid gap-5 md:grid-cols-2">
+                        <div>
+                            <label
+                                htmlFor="organization-name"
+                                className="mb-2 block text-sm font-medium text-gray-700"
+                            >
+                                {t.name}
+                            </label>
 
-                        <input
-                            id="organization-name"
-                            name="name"
-                            type="text"
-                            value={organizationName}
-                            maxLength={MAX_ORGANIZATION_NAME_LENGTH}
-                            disabled={isRegistered}
-                            onChange={(event) => {
-                                setOrganizationName(event.target.value);
-                                clearFieldError("name");
-                            }}
-                            placeholder={t.namePlaceholder}
-                            autoComplete="off"
-                            className={`${inputClassName} ${fieldErrors.name
-                                    ? errorClassName
-                                    : ""
-                                }`}
-                        />
+                            <input
+                                id="organization-name"
+                                name="name"
+                                type="text"
+                                value={organizationName}
+                                minLength={
+                                    MIN_ORGANIZATION_NAME_LENGTH
+                                }
+                                maxLength={
+                                    MAX_ORGANIZATION_NAME_LENGTH
+                                }
+                                disabled={isRegistered}
+                                onChange={(event) => {
+                                    setOrganizationName(
+                                        event.target.value
+                                    );
+                                }}
+                                placeholder={t.namePlaceholder}
+                                autoComplete="organization"
+                                className={`${inputClassName} ${fieldErrors.name
+                                        ? errorClassName
+                                        : ""
+                                    }`}
+                            />
 
-                        {fieldErrors.name && (
-                            <p className="mt-2 text-sm text-red-600">
-                                {fieldErrors.name}
-                            </p>
-                        )}
-                    </div>
-
-                    <div>
-                        <label
-                            htmlFor="organization-slug"
-                            className="mb-2 block text-sm font-medium text-gray-700"
-                        >
-                            {t.slug}
-                        </label>
-
-                        <input
-                            id="organization-slug"
-                            name="slug"
-                            type="text"
-                            value={organizationSlug}
-                            minLength={MIN_SLUG_LENGTH}
-                            maxLength={MAX_SLUG_LENGTH}
-                            disabled={isRegistered}
-                            onChange={(event) => {
-                                const value = event.target.value
-                                    .toLowerCase()
-                                    .replace(/\s+/g, "-")
-                                    .replace(/[^a-z0-9-]/g, "");
-
-                                setOrganizationSlug(value);
-                                clearFieldError("slug");
-                            }}
-                            placeholder={t.slugPlaceholder}
-                            autoComplete="off"
-                            className={`${inputClassName} ${fieldErrors.slug
-                                    ? errorClassName
-                                    : ""
-                                }`}
-                        />
-
-                        {!isRegistered &&
-                            organizationSlug.trim().length > 0 &&
-                            organizationSlug.trim().length <
-                            MIN_SLUG_LENGTH && (
+                            {fieldErrors.name && (
                                 <p className="mt-2 text-sm text-red-600">
-                                    Organization slug must be at least{" "}
-                                    {MIN_SLUG_LENGTH} characters.
+                                    {fieldErrors.name}
                                 </p>
                             )}
+                        </div>
 
-                        {!isRegistered &&
-                            organizationSlug.trim().length >=
-                            MIN_SLUG_LENGTH &&
-                            organizationSlug.trim().length <=
-                            MAX_SLUG_LENGTH && (
-                                <div className="mt-2 text-sm">
-                                    {organizationSlugAvailability ===
-                                        "checking" && (
-                                            <span className="text-gray-500">
-                                                Checking availability...
-                                            </span>
-                                        )}
+                        <div>
+                            <label
+                                htmlFor="organization-slug"
+                                className="mb-2 block text-sm font-medium text-gray-700"
+                            >
+                                {t.slug}
+                            </label>
 
-                                    {organizationSlugAvailability ===
-                                        "available" && (
-                                            <span className="text-green-600">
-                                                Organization slug is available.
-                                            </span>
-                                        )}
+                            <input
+                                id="organization-slug"
+                                name="slug"
+                                type="text"
+                                value={organizationSlug}
+                                minLength={MIN_SLUG_LENGTH}
+                                maxLength={MAX_SLUG_LENGTH}
+                                disabled={isRegistered}
+                                onChange={(event) => {
+                                    const value =
+                                        event.target.value
+                                            .toLowerCase()
+                                            .replace(
+                                                /\s+/g,
+                                                "-"
+                                            )
+                                            .replace(
+                                                /[^a-z0-9-]/g,
+                                                ""
+                                            );
 
-                                    {organizationSlugAvailability ===
-                                        "unavailable" && (
-                                            <span className="text-red-600">
-                                                Organization slug is already taken.
-                                            </span>
-                                        )}
-                                </div>
+                                    setOrganizationSlug(value);
+                                }}
+                                placeholder={t.slugPlaceholder}
+                                autoComplete="off"
+                                className={`${inputClassName} ${fieldErrors.slug
+                                        ? errorClassName
+                                        : ""
+                                    }`}
+                            />
+
+                            {!isRegistered &&
+                                organizationSlug.trim()
+                                    .length >= MIN_SLUG_LENGTH &&
+                                organizationSlug.trim()
+                                    .length <= MAX_SLUG_LENGTH && (
+                                    <div className="mt-2 text-sm">
+                                        {organizationSlugAvailability ===
+                                            "checking" && (
+                                                <span className="text-gray-500">
+                                                    Checking availability...
+                                                </span>
+                                            )}
+
+                                        {organizationSlugAvailability ===
+                                            "available" && (
+                                                <span className="text-green-600">
+                                                    Organization slug is
+                                                    available.
+                                                </span>
+                                            )}
+
+                                        {organizationSlugAvailability ===
+                                            "unavailable" && (
+                                                <span className="text-red-600">
+                                                    Organization slug is
+                                                    already taken.
+                                                </span>
+                                            )}
+                                    </div>
+                                )}
+
+                            {fieldErrors.slug && (
+                                <p className="mt-2 text-sm text-red-600">
+                                    {fieldErrors.slug}
+                                </p>
                             )}
-
-                        {fieldErrors.slug && (
-                            <p className="mt-2 text-sm text-red-600">
-                                {fieldErrors.slug}
-                            </p>
-                        )}
+                        </div>
                     </div>
                 </div>
 
@@ -505,6 +608,7 @@ export default function OrganizationSettings({
                     disabled={isRegistered}
                 />
 
+                {/* Business */}
                 <div className="border-t border-gray-100 pt-6">
                     <div className="mb-5">
                         <h4 className="text-sm font-semibold text-gray-900">
@@ -530,17 +634,23 @@ export default function OrganizationSettings({
                                 name="legal_name"
                                 type="text"
                                 value={legalName}
-                                minLength={MIN_LEGAL_NAME_LENGTH}
-                                maxLength={MAX_LEGAL_NAME_LENGTH}
+                                minLength={
+                                    MIN_LEGAL_NAME_LENGTH
+                                }
+                                maxLength={
+                                    MAX_LEGAL_NAME_LENGTH
+                                }
                                 disabled={isRegistered}
                                 onChange={(event) => {
-                                    setLegalName(event.target.value);
-                                    clearFieldError("legal_name");
+                                    setLegalName(
+                                        event.target.value
+                                    );
                                 }}
                                 placeholder={
-                                    t.business.legalNamePlaceholder
+                                    t.business
+                                        .legalNamePlaceholder
                                 }
-                                autoComplete="off"
+                                autoComplete="organization"
                                 className={`${inputClassName} ${fieldErrors.legal_name
                                         ? errorClassName
                                         : ""
@@ -574,13 +684,15 @@ export default function OrganizationSettings({
                                     setTaxId(
                                         event.target.value
                                             .toUpperCase()
-                                            .replace(/\s+/g, "")
+                                            .replace(
+                                                /\s+/g,
+                                                ""
+                                            )
                                     );
-
-                                    clearFieldError("tax_id");
                                 }}
                                 placeholder={
-                                    t.business.taxIdPlaceholder
+                                    t.business
+                                        .taxIdPlaceholder
                                 }
                                 autoComplete="off"
                                 className={`${inputClassName} ${fieldErrors.tax_id
@@ -610,8 +722,9 @@ export default function OrganizationSettings({
                                 value={businessType}
                                 disabled={isRegistered}
                                 onChange={(event) => {
-                                    setBusinessType(event.target.value);
-                                    clearFieldError("business_type");
+                                    setBusinessType(
+                                        event.target.value
+                                    );
                                 }}
                                 className={`${selectClassName} ${fieldErrors.business_type
                                         ? errorClassName
@@ -654,13 +767,15 @@ export default function OrganizationSettings({
                                 maxLength={MAX_PHONE_LENGTH}
                                 disabled={isRegistered}
                                 onChange={(event) => {
-                                    setPhoneNumber(event.target.value);
-                                    clearFieldError("phone_number");
+                                    setPhoneNumber(
+                                        event.target.value
+                                    );
                                 }}
                                 placeholder={
-                                    t.business.phoneNumberPlaceholder
+                                    t.business
+                                        .phoneNumberPlaceholder
                                 }
-                                autoComplete="off"
+                                autoComplete="tel"
                                 className={`${inputClassName} ${fieldErrors.phone_number
                                         ? errorClassName
                                         : ""

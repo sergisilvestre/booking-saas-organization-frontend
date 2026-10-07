@@ -1,4 +1,7 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL =
+  typeof window === "undefined"
+    ? process.env.INTERNAL_API_URL
+    : process.env.NEXT_PUBLIC_API_URL;
 
 type ApiFetchOptions = RequestInit & {
   auth?: boolean;
@@ -15,11 +18,17 @@ export async function apiFetch(
   const { auth = true, headers, ...fetchOptions } = options;
 
   const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    typeof window !== "undefined"
+      ? localStorage.getItem("token")
+      : null;
 
   const requestHeaders = new Headers(headers);
 
   requestHeaders.set("Accept", "application/json");
+
+  if (fetchOptions.body) {
+    requestHeaders.set("Content-Type", "application/json");
+  }
 
   if (auth && token) {
     requestHeaders.set("Authorization", `Bearer ${token}`);

@@ -1,11 +1,19 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import UserTimezoneInitializer from "@/components/UserTimezoneInitializer";
+import { apiFetch } from "@/lib/api";
 
 type HomePageProps = {
   params: Promise<{
     lang: string;
   }>;
+};
+
+type ConfigOptions = {
+  languages: string[];
+  default_language: string;
 };
 
 type SubscriptionPlanFeature = {
@@ -32,23 +40,27 @@ type SubscriptionPlansResponse = {
   data: SubscriptionPlan[];
 };
 
-async function getSubscriptionPlans(locale: string) {
-  const apiUrl = process.env.INTERNAL_API_URL;
+async function getConfigOptions(): Promise<ConfigOptions> {
+  const response = await apiFetch("config/options", {
+    auth: false,
+  });
 
-  if (!apiUrl) {
-    throw new Error("INTERNAL_API_URL is not configured");
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch config options: ${response.status}`
+    );
   }
 
-  const response = await fetch(
-    `${apiUrl}/api/public/plans?locale=${encodeURIComponent(locale)}`,
+  return response.json();
+}
+
+async function getSubscriptionPlans(
+  locale: string
+): Promise<SubscriptionPlan[]> {
+  const response = await apiFetch(
+    `public/plans?locale=${encodeURIComponent(locale)}`,
     {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
-      next: {
-        revalidate: 60,
-      },
+      auth: false,
     }
   );
 
@@ -70,11 +82,16 @@ async function getSubscriptionPlans(locale: string) {
   return result.data;
 }
 
-
 export default async function HomePage({
   params,
 }: HomePageProps) {
   const { lang } = await params;
+
+  const config = await getConfigOptions();
+
+  if (!config.languages.includes(lang)) {
+    redirect(`/${config.default_language}`);
+  }
 
   const t = await getTranslations({
     locale: lang,
@@ -129,11 +146,12 @@ export default async function HomePage({
 
   return (
     <main className="min-h-screen bg-white text-gray-900">
-      {/* Header */}
+      <UserTimezoneInitializer />
+
       <header className="border-b border-gray-100">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">
           <Link
-            href={`/ ${lang} `}
+            href={`/${lang}`}
             className="text-xl font-bold tracking-tight"
           >
             Booking
@@ -141,21 +159,21 @@ export default async function HomePage({
 
           <nav className="hidden items-center gap-8 md:flex">
             <a
-              href={`/ ${lang} #features`}
+              href={`/${lang}#features`}
               className="text-sm text-gray-600 transition hover:text-gray-900"
             >
               {t("header.features")}
             </a>
 
             <a
-              href={`/ ${lang} #how - it - works`}
+              href={`/${lang}#how-it-works`}
               className="text-sm text-gray-600 transition hover:text-gray-900"
             >
               {t("header.howItWorks")}
             </a>
 
             <a
-              href={`/ ${lang} #pricing`}
+              href={`/${lang}#pricing`}
               className="text-sm text-gray-600 transition hover:text-gray-900"
             >
               {t("header.pricing")}
@@ -170,7 +188,7 @@ export default async function HomePage({
               className="hidden px-4 py-2 text-sm font-medium text-gray-700 transition hover:text-gray-900 sm:block"
             >
               {t("header.login")}
-            </Link >
+            </Link>
 
             <Link
               href={`/${lang}/register`}
@@ -178,12 +196,11 @@ export default async function HomePage({
             >
               {t("header.register")}
             </Link>
-          </div >
-        </div >
-      </header >
+          </div>
+        </div>
+      </header>
 
-      {/* Hero */}
-      <section className="relative overflow-hidden" >
+      <section className="relative overflow-hidden">
         <div className="mx-auto max-w-7xl px-6 pb-24 pt-20 lg:px-8 lg:pb-32 lg:pt-28">
           <div className="mx-auto max-w-3xl text-center">
             <div className="mb-6 inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-600">
@@ -219,11 +236,11 @@ export default async function HomePage({
             </div>
 
             <p className="mt-4 text-sm text-gray-500">
-              {t("hero.noCreditCard")} · {t("hero.setup")}
+              {t("hero.noCreditCard")} ·{" "}
+              {t("hero.setup")}
             </p>
           </div>
 
-          {/* Dashboard preview */}
           <div className="mx-auto mt-20 max-w-5xl">
             <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 shadow-2xl">
               <div className="flex h-10 items-center gap-2 border-b border-gray-200 bg-white px-4">
@@ -233,7 +250,6 @@ export default async function HomePage({
               </div>
 
               <div className="grid min-h-[420px] grid-cols-12">
-                {/* Sidebar */}
                 <aside className="col-span-3 hidden border-r border-gray-200 bg-white p-5 md:block">
                   <div className="mb-8 h-5 w-24 rounded bg-gray-200" />
 
@@ -256,7 +272,6 @@ export default async function HomePage({
                   </div>
                 </aside>
 
-                {/* Dashboard */}
                 <div className="col-span-12 bg-gray-50 p-6 md:col-span-9 md:p-8">
                   <div className="grid gap-4 sm:grid-cols-3">
                     {[
@@ -269,7 +284,9 @@ export default async function HomePage({
                         className="rounded-xl border border-gray-200 bg-white p-5"
                       >
                         <p className="text-sm text-gray-500">
-                          {t(`dashboard.${label}`)}
+                          {t(
+                            `dashboard.${label}`
+                          )}
                         </p>
 
                         <p className="mt-2 text-2xl font-bold">
@@ -305,10 +322,10 @@ export default async function HomePage({
             </div>
           </div>
         </div>
-      </section >
+      </section>
 
-      {/* Features */}
-      <section id="features"
+      <section
+        id="features"
         className="border-t border-gray-100 bg-gray-50 py-24"
       >
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -341,13 +358,9 @@ export default async function HomePage({
             ))}
           </div>
         </div>
-      </section >
+      </section>
 
-      {/* How it works */}
-      < section
-        id="how-it-works"
-        className="py-24"
-      >
+      <section id="how-it-works" className="py-24">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
@@ -374,9 +387,8 @@ export default async function HomePage({
             ))}
           </div>
         </div>
-      </ section>
+      </section>
 
-      {/* Pricing */}
       <section
         id="pricing"
         className="border-t border-gray-100 bg-gray-50 py-24"
@@ -409,32 +421,30 @@ export default async function HomePage({
                 <div
                   key={plan.id}
                   className={`relative flex flex-col rounded-2xl border bg-white p-8 ${highlighted
-                    ? "border-gray-900 shadow-xl"
-                    : "border-gray-200"
+                      ? "border-gray-900 shadow-xl"
+                      : "border-gray-200"
                     }`}
                 >
-                  {/* Popular badge */}
                   {highlighted && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gray-900 px-4 py-1 text-xs font-semibold text-white">
                       {t("pricing.mostPopular")}
                     </div>
                   )}
 
-                  {/* Plan name */}
                   <h3 className="text-xl font-semibold text-gray-900">
                     {plan.name}
                   </h3>
 
-                  {/* Description */}
                   <p className="mt-3 min-h-[48px] text-sm leading-6 text-gray-600">
                     {plan.description}
                   </p>
 
-                  {/* Price */}
                   <div className="mt-8">
                     <span className="text-4xl font-bold tracking-tight">
                       {price}
-                      {plan.price.currency === "EUR" ? "€" : ` ${plan.price.currency}`}
+                      {plan.price.currency === "EUR"
+                        ? "€"
+                        : ` ${plan.price.currency}`}
                     </span>
 
                     <span className="ml-1 text-sm text-gray-500">
@@ -442,12 +452,11 @@ export default async function HomePage({
                     </span>
                   </div>
 
-                  {/* CTA */}
                   <Link
                     href={`/${lang}/register`}
                     className={`mt-8 rounded-xl px-5 py-3 text-center text-sm font-semibold transition ${highlighted
-                      ? "bg-gray-900 text-white hover:bg-gray-800"
-                      : "border border-gray-200 text-gray-700 hover:bg-gray-50"
+                        ? "bg-gray-900 text-white hover:bg-gray-800"
+                        : "border border-gray-200 text-gray-700 hover:bg-gray-50"
                       }`}
                   >
                     {price === 0
@@ -457,7 +466,6 @@ export default async function HomePage({
 
                   <div className="my-8 border-t border-gray-100" />
 
-                  {/* Features */}
                   <ul className="space-y-4">
                     {sortedFeatures.map((feature) => (
                       <li
@@ -477,10 +485,9 @@ export default async function HomePage({
             })}
           </div>
         </div>
-      </section >
+      </section>
 
-      {/* CTA */}
-      < section className="px-6 pb-24 lg:px-8" >
+      <section className="px-6 pb-24 lg:px-8">
         <div className="mx-auto max-w-7xl overflow-hidden rounded-3xl bg-gray-900 px-6 py-20 text-center sm:px-12">
           <h2 className="mx-auto max-w-2xl text-3xl font-bold tracking-tight text-white sm:text-4xl">
             {t("cta.title")}
@@ -497,31 +504,24 @@ export default async function HomePage({
             {t("cta.button")}
           </Link>
         </div>
-      </section >
+      </section>
 
-      {/* Footer */}
-      < footer className="border-t border-gray-100" >
+      <footer className="border-t border-gray-100">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-8 text-sm text-gray-500 sm:flex-row sm:items-center sm:justify-between lg:px-8">
           <p>{t("footer.copyright")}</p>
 
           <div className="flex gap-6">
-            <a
-              href="#"
-              className="hover:text-gray-900"
-            >
+            <a href="#" className="hover:text-gray-900">
               {t("footer.privacy")}
             </a>
 
-            <a
-              href="#"
-              className="hover:text-gray-900"
-            >
+            <a href="#" className="hover:text-gray-900">
               {t("footer.terms")}
             </a>
           </div>
         </div>
-      </footer >
-    </main >
+      </footer>
+    </main>
   );
 }
 
@@ -540,9 +540,7 @@ function Feature({
         {icon}
       </div>
 
-      <h3 className="mt-5 text-lg font-semibold">
-        {title}
-      </h3>
+      <h3 className="mt-5 text-lg font-semibold">{title}</h3>
 
       <p className="mt-2 leading-7 text-gray-600">
         {description}

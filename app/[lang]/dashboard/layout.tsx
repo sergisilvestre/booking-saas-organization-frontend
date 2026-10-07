@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { getTranslations } from "next-intl/server";
 import Sidebar from "@/app/[lang]/dashboard/Sidebar";
+import OnboardingGuard from "@/app/[lang]/dashboard/OnboardingGuard";
+import SettingsWarnings from "./settings/SettingsWarnings";
 
 type Props = {
     children: ReactNode;
@@ -22,6 +24,8 @@ export default async function DashboardLayout({
 
     return (
         <div className="min-h-screen bg-gray-50">
+            <OnboardingGuard />
+
             <Sidebar lang={lang} />
 
             <div className="pl-64">
@@ -36,9 +40,14 @@ export default async function DashboardLayout({
                 </header>
 
                 <main className="p-8">
+                    <SettingsWarnings
+                        accountNeedsValidation={false}
+                        paidBookingsNeedActivation={false}
+                    />
+
                     {children}
                 </main>
             </div>
         </div>
     );
-}
+} 

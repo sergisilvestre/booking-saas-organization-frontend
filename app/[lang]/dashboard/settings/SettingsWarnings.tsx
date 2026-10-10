@@ -6,6 +6,8 @@ import { apiFetch } from "@/lib/api";
 
 type StoredUser = {
     role?: string;
+    email_verified?: boolean;
+    email?: string;
     onboarding?: {
         status?: string;
     };
@@ -24,6 +26,9 @@ export default function SettingsWarnings() {
     const t = useTranslations("dashboard.settings.warnings");
 
     const [user, setUser] = useState<StoredUser | null>(null);
+
+    const [showEmailVerificationDialog, setShowEmailVerificationDialog] =
+        useState(false);
 
     const [stripeOnboardingUrl, setStripeOnboardingUrl] = useState<
         string | null
@@ -105,14 +110,17 @@ export default function SettingsWarnings() {
         };
     }, []);
 
+    const emailNeedsValidation =
+        user?.email_verified === false;
+
     const onboardingNeedsValidation =
-        user?.onboarding !== undefined &&
-        user.onboarding.status !== "complete";
+        emailNeedsValidation !== true &&
+        user?.onboarding?.status !== "complete";
 
     const showStripeWarning =
+        onboardingNeedsValidation !== true &&
         user?.role === "owner" &&
         user.organization !== undefined &&
-        user.onboarding?.status === "complete" &&
         user.features?.payments !== true;
 
     useEffect(() => {
@@ -159,39 +167,94 @@ export default function SettingsWarnings() {
         loadStripeOnboardingUrl();
     }, [showStripeWarning]);
 
-    if (!onboardingNeedsValidation && !showStripeWarning) {
+    if (
+        !emailNeedsValidation &&
+        !onboardingNeedsValidation &&
+        !showStripeWarning
+    ) {
         return null;
     }
 
     return (
-        <div className="mb-6 space-y-3">
-            {onboardingNeedsValidation && (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-                    <div className="flex items-start gap-3">
-                        <div className="mt-0.5 font-bold text-amber-600">
-                            !
-                        </div>
+        <>
+            <div className="mb-6 space-y-3">
+                {emailNeedsValidation && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                        <div className="flex items-start gap-3">
+                            <div className="mt-0.5 font-bold text-amber-600">
+                                !
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-amber-900">
+                                    {t("account.title")}
+                                </p>
 
-                        <div>
-                            <p className="text-sm font-semibold text-amber-900">
-                                {t("account.title")}
-                            </p>
+                                <p className="mt-1 text-sm text-amber-800">
+                                    {t("account.description")}
+                                </p>
 
-                            <p className="mt-1 text-sm text-amber-800">
-                                {t("account.description")}
-                            </p>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setShowEmailVerificationDialog(true)
+                                    }
+                                    className="mt-3 text-sm font-semibold text-amber-900 underline"
+                                >
+                                    {t("account.resend")}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {showStripeWarning && (
-                <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
-                    {stripeOnboardingUrl ? (
-                        <a
-                            href={stripeOnboardingUrl}
-                            className="block w-full cursor-pointer text-left"
-                        >
+                {onboardingNeedsValidation && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                        <div className="flex items-start gap-3">
+                            <div className="mt-0.5 font-bold text-amber-600">
+                                !
+                            </div>
+
+                            <div>
+                                <p className="text-sm font-semibold text-amber-900">
+                                    {t("organization.title")}
+                                </p>
+
+                                <p className="mt-1 text-sm text-amber-800">
+                                    {t("organization.description")}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {showStripeWarning && (
+                    <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+                        {stripeOnboardingUrl ? (
+                            <a
+                                href={stripeOnboardingUrl}
+                                className="block w-full cursor-pointer text-left"
+                            >
+                                <div className="flex items-start gap-3">
+                                    <div className="mt-0.5 font-bold text-blue-600">
+                                        !
+                                    </div>
+
+                                    <div>
+                                        <p className="text-sm font-semibold text-blue-900">
+                                            {t("stripe.title")}
+                                        </p>
+
+                                        <p className="mt-1 text-sm text-blue-800">
+                                            {t("stripe.description")}
+                                        </p>
+
+                                        <p className="mt-2 text-sm font-semibold text-blue-900">
+                                            {t("stripe.action")} →
+                                        </p>
+                                    </div>
+                                </div>
+                            </a>
+                        ) : (
                             <div className="flex items-start gap-3">
                                 <div className="mt-0.5 font-bold text-blue-600">
                                     !
@@ -206,37 +269,54 @@ export default function SettingsWarnings() {
                                         {t("stripe.description")}
                                     </p>
 
-                                    <p className="mt-2 text-sm font-semibold text-blue-900">
-                                        {t("stripe.action")} →
-                                    </p>
+                                    {loadingStripe && (
+                                        <p className="mt-2 text-sm font-semibold text-blue-900">
+                                            {t("stripe.loading")}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
-                        </a>
-                    ) : (
-                        <div className="flex items-start gap-3">
-                            <div className="mt-0.5 font-bold text-blue-600">
-                                !
-                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
 
-                            <div>
-                                <p className="text-sm font-semibold text-blue-900">
-                                    {t("stripe.title")}
-                                </p>
+            {showEmailVerificationDialog && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+                    <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+                        <h2 className="text-lg font-semibold text-gray-900">
+                            {t("email.dialog.title")}
+                        </h2>
 
-                                <p className="mt-1 text-sm text-blue-800">
-                                    {t("stripe.description")}
-                                </p>
+                        <p className="mt-2 text-sm text-gray-600">
+                            {t("email.dialog.description")}
+                        </p>
 
-                                {loadingStripe && (
-                                    <p className="mt-2 text-sm font-semibold text-blue-900">
-                                        {t("stripe.loading")}
-                                    </p>
-                                )}
-                            </div>
+                        <p className="mt-2 text-sm font-medium text-gray-900">
+                            {user?.email}
+                        </p>
+
+                        <div className="mt-6 flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setShowEmailVerificationDialog(false)
+                                }
+                                className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                            >
+                                {t("email.dialog.close")}
+                            </button>
+
+                            <button
+                                type="button"
+                                className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800"
+                            >
+                                {t("email.dialog.resend")}
+                            </button>
                         </div>
-                    )}
+                    </div>
                 </div>
             )}
-        </div>
+        </>
     );
 }

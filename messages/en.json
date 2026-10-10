@@ -196,7 +196,9 @@
             "availability": "Availability",
             "customers": "Customers",
             "team": "Team",
-            "settings": "Settings"
+            "settings": "Settings",
+            "subscription": "Subscription",
+            "billing": "Billing"
         },
         "calendar": {
             "title": "Calendar",
@@ -375,7 +377,8 @@
                 "namePlaceholder": "Enter your name",
                 "email": "Email",
                 "emailPlaceholder": "Enter your email",
-                "save": "Save changes"
+                "save": "Save changes",
+                "saving":"Saving changes ..."
             },
             "security": {
                 "title": "Security",
@@ -389,8 +392,16 @@
             },
             "warnings": {
                 "account": {
-                    "title": "Validate your account",
-                    "description": "Complete your account information to unlock all features."
+                    "title": "Verify your email",
+                    "description": "Please check your email inbox and click the verification link to continue.",
+                    "resend": "Resend verification email",
+                    "resending": "Sending verification email...",
+                    "resent": "Verification email sent. Please check your inbox.",
+                    "error": "Unable to resend the verification email. Please try again."
+                },
+                "organization": {
+                    "title": "Complete your organization setup",
+                    "description": "Fill in your organization details and activate Stripe payments to start accepting online payments."
                 },
                 "stripe": {
                     "title": "Activate paid bookings",
@@ -398,6 +409,36 @@
                     "action": "Click here to continue",
                     "loading": "Preparing Stripe..."
                 }
+            }
+        },
+        "subscription": {
+            "title": "Subscription",
+            "description": "Manage your subscription and billing.",
+            "currentPlan": "Current plan",
+            "active": "Active",
+            "plans": "Plans",
+            "mostPopular": "Most popular",
+            "month": "month",
+            "upgrade": "Upgrade plan"
+        },
+        "billing": {
+            "title": "Billing",
+            "description": "View your invoices and payments.",
+            "tabs": {
+                "subscription": "Subscription",
+                "bookings": "Bookings"
+            },
+            "subscriptionInvoices": {
+                "title": "Subscription invoices",
+                "description": "View invoices for your subscription plan."
+            },
+            "bookingInvoices": {
+                "title": "Booking invoices",
+                "description": "View invoices generated from your bookings."
+            },
+            "empty": {
+                "title": "No invoices",
+                "description": "You don't have any invoices yet."
             }
         }
     }

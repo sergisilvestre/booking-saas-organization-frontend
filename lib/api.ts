@@ -5,7 +5,31 @@ const API_URL =
 
 type ApiFetchOptions = RequestInit & {
   auth?: boolean;
+  showLoading?: boolean;
 };
+
+let loadingCount = 0;
+let loadingListener: ((loading: boolean) => void) | null = null;
+
+export function setLoadingListener(
+  listener: ((loading: boolean) => void) | null,
+): void {
+  loadingListener = listener;
+}
+
+function startLoading(): void {
+  loadingCount++;
+
+  loadingListener?.(true);
+}
+
+function stopLoading(): void {
+  loadingCount = Math.max(0, loadingCount - 1);
+
+  if (loadingCount === 0) {
+    loadingListener?.(false);
+  }
+}
 
 export function apiUrl(endpoint: string): string {
   return `${API_URL}/api/${endpoint}`;
@@ -15,27 +39,40 @@ export async function apiFetch(
   endpoint: string,
   options: ApiFetchOptions = {},
 ): Promise<Response> {
-  const { auth = true, headers, ...fetchOptions } = options;
+  const {
+    auth = true,
+    showLoading = false,
+    headers,
+    ...fetchOptions
+  } = options;
 
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("token")
-      : null;
-
-  const requestHeaders = new Headers(headers);
-
-  requestHeaders.set("Accept", "application/json");
-
-  if (fetchOptions.body) {
-    requestHeaders.set("Content-Type", "application/json");
+  if (showLoading) {
+    startLoading();
   }
 
-  if (auth && token) {
-    requestHeaders.set("Authorization", `Bearer ${token}`);
-  }
+  try {
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
-  return fetch(apiUrl(endpoint), {
-    ...fetchOptions,
-    headers: requestHeaders,
-  });
+    const requestHeaders = new Headers(headers);
+
+    requestHeaders.set("Accept", "application/json");
+
+    if (fetchOptions.body) {
+      requestHeaders.set("Content-Type", "application/json");
+    }
+
+    if (auth && token) {
+      requestHeaders.set("Authorization", `Bearer ${token}`);
+    }
+
+    return await fetch(apiUrl(endpoint), {
+      ...fetchOptions,
+      headers: requestHeaders,
+    });
+  } finally {
+    if (showLoading) {
+      stopLoading();
+    }
+  }
 }

@@ -7,8 +7,8 @@ type User = {
     id: string;
     name: string;
     email: string;
-    language?: string;
-    timezone?: string;
+    language?: string | null;
+    timezone?: string | null;
 };
 
 type ConfigOptions = {
@@ -29,6 +29,7 @@ type Props = {
         language: string;
         timezone: string;
         save: string;
+        saving: string;
     };
     user: User | null;
 };
@@ -42,72 +43,101 @@ export default function AccountSettings({
     translations: t,
     user,
 }: Props) {
-    const [config, setConfig] = useState<ConfigOptions | null>(null);
-    const [language, setLanguage] = useState(user?.language ?? "");
-    const [timezone, setTimezone] = useState(user?.timezone ?? "");
+    const [config, setConfig] =
+        useState<ConfigOptions | null>(null);
+
+    const [language, setLanguage] = useState("");
+    const [timezone, setTimezone] = useState("");
+
+    // Values received from the authenticated user.
+    // These are the values used to determine if the form has changes.
+    const [currentLanguage, setCurrentLanguage] = useState("");
+    const [currentTimezone, setCurrentTimezone] = useState("");
+
     const [saving, setSaving] = useState(false);
+    const [initialized, setInitialized] = useState(false);
 
     useEffect(() => {
-        const storedOptions = localStorage.getItem(
-            CONFIG_OPTIONS_STORAGE_KEY
-        );
+        const initialize = (options: ConfigOptions) => {
+            setConfig(options);
 
-        if (storedOptions) {
-            try {
-                const options: ConfigOptions = JSON.parse(storedOptions);
+            const storedLanguage = localStorage.getItem(
+                USER_LANGUAGE_STORAGE_KEY
+            );
 
-                setConfig(options);
+            const storedTimezone = localStorage.getItem(
+                USER_TIMEZONE_STORAGE_KEY
+            );
 
-                setLanguage(
-                    user?.language ??
-                    localStorage.getItem(USER_LANGUAGE_STORAGE_KEY) ??
-                    options.default_language
-                );
+            const effectiveLanguage =
+                user?.language ??
+                storedLanguage ??
+                options.default_language;
 
-                setTimezone(
-                    user?.timezone ??
-                    localStorage.getItem(USER_TIMEZONE_STORAGE_KEY) ??
-                    options.default_timezone
-                );
+            const effectiveTimezone =
+                user?.timezone ??
+                storedTimezone ??
+                options.default_timezone;
 
-                return;
-            } catch {
-                localStorage.removeItem(CONFIG_OPTIONS_STORAGE_KEY);
-            }
-        }
+            setLanguage(effectiveLanguage);
+            setTimezone(effectiveTimezone);
+
+            setCurrentLanguage(effectiveLanguage);
+            setCurrentTimezone(effectiveTimezone);
+
+            setInitialized(true);
+        };
 
         const loadConfig = async () => {
+            const storedOptions = localStorage.getItem(
+                CONFIG_OPTIONS_STORAGE_KEY
+            );
+
+            if (storedOptions) {
+                try {
+                    const options: ConfigOptions =
+                        JSON.parse(storedOptions);
+
+                    initialize(options);
+
+                    return;
+                } catch {
+                    localStorage.removeItem(
+                        CONFIG_OPTIONS_STORAGE_KEY
+                    );
+                }
+            }
+
             try {
-                const response = await apiFetch("config/options", {
-                    auth: false,
-                });
+                const response = await apiFetch(
+                    "config/options",
+                    {
+                        auth: false,
+                    }
+                );
 
                 if (!response.ok) {
-                    throw new Error("Failed to load config options");
+                    throw new Error(
+                        "Failed to load config options"
+                    );
                 }
 
-                const options: ConfigOptions = await response.json();
+                const options: ConfigOptions =
+                    await response.json();
 
                 localStorage.setItem(
                     CONFIG_OPTIONS_STORAGE_KEY,
                     JSON.stringify(options)
                 );
 
-                setConfig(options);
-
-                setLanguage(
-                    user?.language ??
-                    localStorage.getItem(USER_LANGUAGE_STORAGE_KEY) ??
-                    options.default_language
+                initialize(options);
+            } catch (error) {
+                console.error(
+                    "Failed to load config options:",
+                    error
                 );
 
-                setTimezone(
-                    user?.timezone ??
-                    localStorage.getItem(USER_TIMEZONE_STORAGE_KEY) ??
-                    options.default_timezone
-                );
-            } catch {
-                setConfig(null);
+                setInitialized(true);
             }
         };
 
@@ -115,16 +145,76 @@ export default function AccountSettings({
     }, [user]);
 
     useEffect(() => {
-        if (!user) {
-            return;
-        }
+        const handleUserUpdated = () => {
+            const cachedUser =
+                localStorage.getItem(USER_STORAGE_KEY);
 
-        setLanguage(user.language ?? "");
-        setTimezone(user.timezone ?? "");
-    }, [user]);
+            if (!cachedUser) {
+                return;
+            }
+
+            try {
+                const updatedUser: User =
+                    JSON.parse(cachedUser);
+
+                const updatedLanguage =
+                    updatedUser.language ??
+                    localStorage.getItem(
+                        USER_LANGUAGE_STORAGE_KEY
+                    ) ??
+                    config?.default_language ??
+                    "";
+
+                const updatedTimezone =
+                    updatedUser.timezone ??
+                    localStorage.getItem(
+                        USER_TIMEZONE_STORAGE_KEY
+                    ) ??
+                    config?.default_timezone ??
+                    "";
+
+                // Update form values
+                setLanguage(updatedLanguage);
+                setTimezone(updatedTimezone);
+
+                // Update the values used by hasChanges
+                setCurrentLanguage(updatedLanguage);
+                setCurrentTimezone(updatedTimezone);
+
+                setInitialized(true);
+            } catch (error) {
+                console.error(
+                    "Failed to parse updated user:",
+                    error
+                );
+            }
+        };
+
+        window.addEventListener(
+            "auth:user-updated",
+            handleUserUpdated
+        );
+
+        return () => {
+            window.removeEventListener(
+                "auth:user-updated",
+                handleUserUpdated
+            );
+        };
+    }, [config]);
+
+    const hasChanges =
+        language !== currentLanguage ||
+        timezone !== currentTimezone;
 
     const handleSave = async () => {
-        if (!user || saving) {
+        if (
+            !user ||
+            saving ||
+            !language ||
+            !timezone ||
+            !hasChanges
+        ) {
             return;
         }
 
@@ -133,6 +223,9 @@ export default function AccountSettings({
 
             const response = await apiFetch("auth/me", {
                 method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
                 body: JSON.stringify({
                     language,
                     timezone,
@@ -140,10 +233,32 @@ export default function AccountSettings({
             });
 
             if (!response.ok) {
-                throw new Error("Failed to update account settings");
+                const body = await response.text();
+
+                console.error(
+                    "Failed to update account settings:",
+                    {
+                        status: response.status,
+                        body,
+                    }
+                );
+
+                throw new Error(
+                    "Failed to update account settings"
+                );
             }
 
-            const updatedUser: User = await response.json();
+            const responseData =
+                await response.json();
+
+            const updatedUser: User =
+                responseData.data ?? responseData;
+
+            const updatedLanguage =
+                updatedUser.language ?? language;
+
+            const updatedTimezone =
+                updatedUser.timezone ?? timezone;
 
             localStorage.setItem(
                 USER_STORAGE_KEY,
@@ -152,22 +267,35 @@ export default function AccountSettings({
 
             localStorage.setItem(
                 USER_LANGUAGE_STORAGE_KEY,
-                updatedUser.language ?? language
+                updatedLanguage
             );
 
             localStorage.setItem(
                 USER_TIMEZONE_STORAGE_KEY,
-                updatedUser.timezone ?? timezone
+                updatedTimezone
             );
 
-            setLanguage(updatedUser.language ?? language);
-            setTimezone(updatedUser.timezone ?? timezone);
+            setLanguage(updatedLanguage);
+            setTimezone(updatedTimezone);
+
+            // The saved values are now the current values.
+            setCurrentLanguage(updatedLanguage);
+            setCurrentTimezone(updatedTimezone);
+
+            window.dispatchEvent(
+                new Event("auth:user-updated")
+            );
         } catch (error) {
-            console.error("Failed to save account settings:", error);
+            console.error(
+                "Failed to save account settings:",
+                error
+            );
         } finally {
             setSaving(false);
         }
     };
+
+
 
     return (
         <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -237,17 +365,23 @@ export default function AccountSettings({
                         onChange={(event) =>
                             setLanguage(event.target.value)
                         }
-                        disabled={!config?.languages.length || saving}
+                        disabled={
+                            !initialized ||
+                            !config?.languages.length ||
+                            saving
+                        }
                         className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500"
                     >
-                        {config?.languages.map((languageOption) => (
-                            <option
-                                key={languageOption}
-                                value={languageOption}
-                            >
-                                {languageOption.toUpperCase()}
-                            </option>
-                        ))}
+                        {config?.languages.map(
+                            (languageOption) => (
+                                <option
+                                    key={languageOption}
+                                    value={languageOption}
+                                >
+                                    {languageOption.toUpperCase()}
+                                </option>
+                            )
+                        )}
                     </select>
                 </div>
 
@@ -266,17 +400,23 @@ export default function AccountSettings({
                         onChange={(event) =>
                             setTimezone(event.target.value)
                         }
-                        disabled={!config?.timezones.length || saving}
+                        disabled={
+                            !initialized ||
+                            !config?.timezones.length ||
+                            saving
+                        }
                         className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500"
                     >
-                        {config?.timezones.map((timezoneOption) => (
-                            <option
-                                key={timezoneOption}
-                                value={timezoneOption}
-                            >
-                                {timezoneOption}
-                            </option>
-                        ))}
+                        {config?.timezones.map(
+                            (timezoneOption) => (
+                                <option
+                                    key={timezoneOption}
+                                    value={timezoneOption}
+                                >
+                                    {timezoneOption}
+                                </option>
+                            )
+                        )}
                     </select>
                 </div>
             </div>
@@ -286,14 +426,16 @@ export default function AccountSettings({
                     type="button"
                     onClick={handleSave}
                     disabled={
+                        !initialized ||
                         saving ||
                         !user ||
                         !language ||
-                        !timezone
+                        !timezone ||
+                        !hasChanges
                     }
                     className="rounded-xl bg-gray-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300"
                 >
-                    {saving ? "Saving..." : t.save}
+                    {saving ? t.saving : t.save}
                 </button>
             </div>
         </section>

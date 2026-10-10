@@ -41,6 +41,14 @@ export default async function Sidebar({ lang }: Props) {
             key: "settings",
             href: `/${lang}/dashboard/settings`,
         },
+        {
+            key: "subscription",
+            href: `/${lang}/dashboard/subscription`,
+        },
+        {
+            key: "billing",
+            href: `/${lang}/dashboard/billing`,
+        },
     ];
 
     return (

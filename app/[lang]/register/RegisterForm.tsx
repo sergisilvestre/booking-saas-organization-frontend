@@ -13,6 +13,37 @@ type Props = {
     lang: string;
 };
 
+type ConfigOptions = {
+    languages: string[];
+    timezones: string[];
+    default_language: string;
+    default_timezone: string;
+};
+
+const CONFIG_OPTIONS_STORAGE_KEY = "config_options";
+const USER_STORAGE_KEY = "user";
+
+function getConfigOptions(): ConfigOptions | null {
+    const storedOptions = localStorage.getItem(
+        CONFIG_OPTIONS_STORAGE_KEY
+    );
+
+    if (!storedOptions) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(storedOptions);
+    } catch {
+        localStorage.removeItem(CONFIG_OPTIONS_STORAGE_KEY);
+        return null;
+    }
+}
+
+function getBrowserTimezone(): string | null {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+}
+
 export default function RegisterForm({ lang }: Props) {
     const t = useTranslations("register");
     const router = useRouter();
@@ -69,8 +100,25 @@ export default function RegisterForm({ lang }: Props) {
         try {
             setLoading(true);
 
+            const config = getConfigOptions();
+
+            const language =
+                config?.languages.includes(lang)
+                    ? lang
+                    : config?.default_language ?? "es";
+
+            const browserTimezone =
+                getBrowserTimezone();
+
+            const timezone =
+                browserTimezone &&
+                    config?.timezones.includes(browserTimezone)
+                    ? browserTimezone
+                    : config?.default_timezone ??
+                    "Europe/Madrid";
+
             const response = await apiFetch(
-                "auth/register",
+                "organization/auth/register",
                 {
                     method: "POST",
                     auth: false,
@@ -83,7 +131,9 @@ export default function RegisterForm({ lang }: Props) {
                         password: form.password,
                         password_confirmation:
                             form.passwordConfirmation,
-                        locale: lang,
+                        locale: language,
+                        language,
+                        timezone,
                     }),
                 },
             );
@@ -106,9 +156,15 @@ export default function RegisterForm({ lang }: Props) {
                 data.token,
             );
 
-            // Organization creation happens after account registration.
+            if (data.user) {
+                localStorage.setItem(
+                    USER_STORAGE_KEY,
+                    JSON.stringify(data.user),
+                );
+            }
+
             router.push(
-                `/${lang}/dashboard/settings`,
+                `/${language}/dashboard/settings`,
             );
         } catch (err) {
             setError(

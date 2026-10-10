@@ -190,7 +190,9 @@
             "availability": "Disponibilidad",
             "customers": "Clientes",
             "team": "Equipo",
-            "settings": "Configuración"
+            "settings": "Configuración",
+            "subscription": "Suscripción",
+            "billing": "Facturación"
         },
         "calendar": {
             "title": "Calendario",
@@ -369,7 +371,8 @@
                 "namePlaceholder": "Introduce tu nombre",
                 "email": "Correo electrónico",
                 "emailPlaceholder": "Introduce tu correo electrónico",
-                "save": "Guardar cambios"
+                "save": "Guardar cambios",
+                "saving":"Guardando cambios ..."
             },
             "security": {
                 "title": "Seguridad",
@@ -383,8 +386,19 @@
             },
             "warnings": {
                 "account": {
-                    "title": "Valida tu cuenta",
-                    "description": "Completa la información de tu cuenta para desbloquear todas las funciones."
+                    "title": "Verifica tu correo electrónico",
+                    "description": "Revisa tu bandeja de entrada y verifica tu dirección de correo electrónico antes de continuar.",
+                    "resend": "Reenviar correo de verificación",
+                    "dialog": {
+                        "title": "Verifica tu correo electrónico",
+                        "description": "Hemos enviado un correo de verificación a:",
+                        "close": "Cerrar",
+                        "resend": "Reenviar correo"
+                    }
+                },
+                "organization": {
+                    "title": "Termina de configurar tu organización",
+                    "description": "Completa el perfil de tu organización y conecta Stripe para empezar a aceptar pagos."
                 },
                 "stripe": {
                     "title": "Activa las reservas de pago",
@@ -392,6 +406,36 @@
                     "action": "Haz clic aquí para continuar",
                     "loading": "Preparando Stripe..."
                 }
+            }
+        },
+        "subscription": {
+            "title": "Suscripción",
+            "description": "Gestiona tu suscripción y facturación.",
+            "currentPlan": "Plan actual",
+            "active": "Activo",
+            "plans": "Planes",
+            "mostPopular": "Más popular",
+            "month": "mes",
+            "upgrade": "Mejorar plan"
+        },
+        "billing": {
+            "title": "Facturación",
+            "description": "Consulta tus facturas y pagos.",
+            "tabs": {
+                "subscription": "Suscripción",
+                "bookings": "Reservas"
+            },
+            "subscriptionInvoices": {
+                "title": "Facturas de suscripción",
+                "description": "Consulta las facturas de tu plan de suscripción."
+            },
+            "bookingInvoices": {
+                "title": "Facturas de reservas",
+                "description": "Consulta las facturas generadas por tus reservas."
+            },
+            "empty": {
+                "title": "No hay facturas",
+                "description": "Todavía no tienes ninguna factura."
             }
         }
     }

@@ -195,7 +195,9 @@
             "availability": "Disponibilitat",
             "customers": "Clients",
             "team": "Equip",
-            "settings": "Configuració"
+            "settings": "Configuració",
+            "subscription": "Subscripció",
+            "billing": "Facturació"
         },
         "calendar": {
             "title": "Calendari",
@@ -374,7 +376,8 @@
                 "namePlaceholder": "Introdueix el teu nom",
                 "email": "Correu electrònic",
                 "emailPlaceholder": "Introdueix el teu correu electrònic",
-                "save": "Desar els canvis"
+                "save": "Desar els canvis",
+                "saving": "Desant canvis"
             },
             "security": {
                 "title": "Seguretat",
@@ -388,8 +391,19 @@
             },
             "warnings": {
                 "account": {
-                    "title": "Valida el teu compte",
-                    "description": "Completa la informació del teu compte per desbloquejar totes les funcions."
+                    "title": "Verifica el teu correu electrònic",
+                    "description": "Comprova la teva safata d'entrada i verifica la teva adreça de correu electrònic abans de continuar.",
+                    "resend": "Reenvia el correu de verificació",
+                    "dialog": {
+                        "title": "Verifica el teu correu electrònic",
+                        "description": "Hem enviat un correu de verificació a:",
+                        "close": "Tancar",
+                        "resend": "Reenviar correu"
+                    }
+                },
+                "organization": {
+                    "title": "Acaba de configurar la teva organització",
+                    "description": "Completa el perfil de la teva organització i connecta Stripe per començar a acceptar pagaments."
                 },
                 "stripe": {
                     "title": "Activa les reserves de pagament",
@@ -397,6 +411,36 @@
                     "action": "Fes clic aquí per continuar",
                     "loading": "Preparant Stripe..."
                 }
+            }
+        },
+        "subscription": {
+            "title": "Subscripció",
+            "description": "Gestiona la teva subscripció i facturació.",
+            "currentPlan": "Pla actual",
+            "active": "Actiu",
+            "plans": "Plans",
+            "mostPopular": "Més popular",
+            "month": "mes",
+            "upgrade": "Millorar el pla"
+        },
+        "billing": {
+            "title": "Facturació",
+            "description": "Consulta les teves factures i pagaments.",
+            "tabs": {
+                "subscription": "Subscripció",
+                "bookings": "Reserves"
+            },
+            "subscriptionInvoices": {
+                "title": "Factures de subscripció",
+                "description": "Consulta les factures del teu pla de subscripció."
+            },
+            "bookingInvoices": {
+                "title": "Factures de reserves",
+                "description": "Consulta les factures generades per les teves reserves."
+            },
+            "empty": {
+                "title": "No hi ha factures",
+                "description": "Encara no tens cap factura."
             }
         }
     }

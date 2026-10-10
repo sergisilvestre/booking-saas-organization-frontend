@@ -29,7 +29,7 @@ export default function LoginForm({ lang }: Props) {
 
         try {
             const response = await apiFetch(
-                "auth/organization/login",
+                "organization/auth/login",
                 {
                     method: "POST",
                     auth: false,

@@ -165,6 +165,11 @@
         "description": "Espera mientras terminamos de configurar tu cuenta.",
         "secureAuthentication": "Autenticación segura"
     },
+    "emailVerification": {
+        "title": "Verificando tu correo electrónico",
+        "description": "Espera mientras verificamos tu dirección de correo electrónico.",
+        "secureVerification": "Verificación segura del correo electrónico"
+    },
     "dashboard": {
         "account": {
             "logout": "Cerrar sesión",
@@ -372,7 +377,7 @@
                 "email": "Correo electrónico",
                 "emailPlaceholder": "Introduce tu correo electrónico",
                 "save": "Guardar cambios",
-                "saving":"Guardando cambios ..."
+                "saving": "Guardando cambios ..."
             },
             "security": {
                 "title": "Seguridad",

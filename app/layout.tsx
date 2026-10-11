@@ -3,7 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import "./globals.css";
+
 import { LoadingProvider } from "@/components/providers/LoadingProvider";
+import { CurrentUserProvider } from "@/components/providers/CurrentUserProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,13 +44,15 @@ export default async function LangLayout({
       lang={lang}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="flex min-h-full flex-col">
         <NextIntlClientProvider
           locale={lang}
           messages={messages}
         >
           <LoadingProvider>
-            {children}
+            <CurrentUserProvider>
+              {children}
+            </CurrentUserProvider>
           </LoadingProvider>
         </NextIntlClientProvider>
       </body>

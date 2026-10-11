@@ -171,6 +171,11 @@
         "description": "Please wait while we finish setting up your account.",
         "secureAuthentication": "Secure authentication"
     },
+    "emailVerification": {
+        "title": "Verifying your email",
+        "description": "Please wait while we verify your email address.",
+        "secureVerification": "Secure email verification"
+    },
     "dashboard": {
         "account": {
             "logout": "Logout",
@@ -378,7 +383,7 @@
                 "email": "Email",
                 "emailPlaceholder": "Enter your email",
                 "save": "Save changes",
-                "saving":"Saving changes ..."
+                "saving": "Saving changes ..."
             },
             "security": {
                 "title": "Security",

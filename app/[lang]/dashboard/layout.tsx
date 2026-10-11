@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import { getTranslations } from "next-intl/server";
 import Sidebar from "@/app/[lang]/dashboard/Sidebar";
-import OnboardingGuard from "@/app/[lang]/dashboard/OnboardingGuard";
-import SettingsWarnings from "./settings/SettingsWarnings";
+import SettingsWarnings from "../../../components/onboarding/SettingsWarnings";
+import OnboardingGuard from "@/components/onboarding/OnboardingGuard";
+import { CurrentUserProvider } from "@/components/providers/CurrentUserProvider";
 
 type Props = {
     children: ReactNode;
@@ -23,31 +24,29 @@ export default async function DashboardLayout({
     });
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <OnboardingGuard />
+        <CurrentUserProvider>
+            <OnboardingGuard lang={lang}>
+                <div className="min-h-screen bg-gray-50">
+                    <Sidebar lang={lang} />
 
-            <Sidebar lang={lang} />
+                    <div className="pl-64">
+                        <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-8">
+                            <h1 className="text-lg font-semibold text-gray-900">
+                                {t("header.title")}
+                            </h1>
 
-            <div className="pl-64">
-                <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-8">
-                    <h1 className="text-lg font-semibold text-gray-900">
-                        {t("header.title")}
-                    </h1>
+                            <div className="text-sm text-gray-500">
+                                {t("header.account")}
+                            </div>
+                        </header>
 
-                    <div className="text-sm text-gray-500">
-                        {t("header.account")}
+                        <main className="p-8">
+                            <SettingsWarnings />
+                            {children}
+                        </main>
                     </div>
-                </header>
-
-                <main className="p-8">
-                    <SettingsWarnings
-                        accountNeedsValidation={false}
-                        paidBookingsNeedActivation={false}
-                    />
-
-                    {children}
-                </main>
-            </div>
-        </div>
+                </div>
+            </OnboardingGuard>
+        </CurrentUserProvider>
     );
-} 
+}

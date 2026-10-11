@@ -170,6 +170,11 @@
         "description": "Espera mentre acabem de configurar el teu compte.",
         "secureAuthentication": "Autenticació segura"
     },
+    "emailVerification": {
+        "title": "Verificant el teu correu electrònic",
+        "description": "Espera mentre verifiquem la teva adreça de correu electrònic.",
+        "secureVerification": "Verificació segura del correu electrònic"
+    },
     "dashboard": {
         "account": {
             "logout": "Tancar sessió",

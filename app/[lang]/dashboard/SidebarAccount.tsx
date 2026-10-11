@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { apiFetch } from "@/lib/api";
 
 type Props = {
     lang: string;
@@ -32,7 +31,6 @@ const USER_LANGUAGE_STORAGE_KEY = "user_language";
 export default function SidebarAccount({ lang }: Props) {
     const router = useRouter();
     const pathname = usePathname();
-
     const t = useTranslations("dashboard.account");
 
     const [user, setUser] = useState<User | null>(null);
@@ -40,108 +38,67 @@ export default function SidebarAccount({ lang }: Props) {
     const [loggingOut, setLoggingOut] = useState(false);
 
     useEffect(() => {
-        async function loadUser() {
+        const token = localStorage.getItem("token");
 
-            const token = localStorage.getItem("token");
-
-            if (!token) {
-
-                localStorage.removeItem(USER_STORAGE_KEY);
-                router.replace(`/${lang}/login`);
-                return;
-            }
-
-            const cachedUser = localStorage.getItem(USER_STORAGE_KEY);
-
-            if (cachedUser) {
-                try {
-                    const parsedUser: User = JSON.parse(cachedUser);
-
-                    setUser(parsedUser);
-                } catch (error) {
-                    console.error(
-                        "[SidebarAccount] Failed to parse cached user:",
-                        error
-                    );
-
-                    localStorage.removeItem(USER_STORAGE_KEY);
-                }
-            }
-
-            try {
-                const response = await apiFetch("organization/auth/me");
-
-                if (!response.ok) {
-
-                    localStorage.removeItem("token");
-                    localStorage.removeItem(USER_STORAGE_KEY);
-
-                    router.replace(`/${lang}/login`);
-                    return;
-                }
-
-                const data = await response.json();
-
-                const authenticatedUser: User = data.data ?? data;
-
-                setUser(authenticatedUser);
-
-                localStorage.setItem(
-                    USER_STORAGE_KEY,
-                    JSON.stringify(authenticatedUser)
-                );
-
-                window.dispatchEvent(new Event("auth:user-loaded"));
-
-                if (authenticatedUser.language) {
-                    const previousLanguage = localStorage.getItem(
-                        USER_LANGUAGE_STORAGE_KEY
-                    );
-
-                    localStorage.setItem(
-                        USER_LANGUAGE_STORAGE_KEY,
-                        authenticatedUser.language
-                    );
-                }
-
-                if (
-                    authenticatedUser.organization === null &&
-                    authenticatedUser.onboarding?.status ===
-                    "organization_required"
-                ) {
-                    const settingsPath = `/${lang}/dashboard/settings`;
-
-                    if (pathname !== settingsPath) {
-
-                        router.replace(settingsPath);
-                        return;
-                    }
-                }
-            } catch (error) {
-                console.error(
-                    "[SidebarAccount] Failed to load authenticated user:",
-                    error
-                );
-
-                localStorage.removeItem("token");
-                localStorage.removeItem(USER_STORAGE_KEY);
-
-                router.replace(`/${lang}/login`);
-            } finally {
-                setLoading(false);
-            }
+        if (!token) {
+            localStorage.removeItem(USER_STORAGE_KEY);
+            setUser(null);
+            setLoading(false);
+            router.replace(`/${lang}/login`);
+            return;
         }
 
-        loadUser();
+        const cachedUser = localStorage.getItem(USER_STORAGE_KEY);
+
+        if (!cachedUser) {
+            setUser(null);
+            setLoading(false);
+            router.replace(`/${lang}/login`);
+            return;
+        }
+
+        try {
+            const parsedUser: User = JSON.parse(cachedUser);
+
+            if (!parsedUser || typeof parsedUser.name !== "string" || typeof parsedUser.email !== "string") {
+                throw new Error("Invalid cached user data");
+            }
+
+            setUser(parsedUser);
+
+            if (parsedUser.language) {
+                localStorage.setItem(
+                    USER_LANGUAGE_STORAGE_KEY,
+                    parsedUser.language,
+                );
+            }
+
+            if (
+                parsedUser.organization === null &&
+                parsedUser.onboarding?.status === "organization_required"
+            ) {
+                const settingsPath = `/${lang}/dashboard/settings`;
+
+                if (pathname !== settingsPath) {
+                    router.replace(settingsPath);
+                }
+            }
+        } catch (error) {
+            console.error(
+                "[SidebarAccount] Failed to load cached user:",
+                error,
+            );
+
+            localStorage.removeItem(USER_STORAGE_KEY);
+            setUser(null);
+            router.replace(`/${lang}/login`);
+        } finally {
+            setLoading(false);
+        }
     }, [lang, pathname, router]);
 
     async function handleLogout() {
         setLoggingOut(true);
-
-        void apiFetch("auth/logout", {
-            method: "POST",
-            // showLoading: true,
-        });
 
         localStorage.removeItem("token");
         localStorage.removeItem(USER_STORAGE_KEY);

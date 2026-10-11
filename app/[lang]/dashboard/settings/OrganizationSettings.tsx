@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import TimezoneField from "@/components/TimezoneField";
-
 import { apiFetch } from "@/lib/api";
 
 type Translations = {
@@ -96,6 +95,7 @@ export default function OrganizationSettings({
 
     const [organizationName, setOrganizationName] = useState("");
     const [organizationSlug, setOrganizationSlug] = useState("");
+
     const [organizationSlugAvailability, setOrganizationSlugAvailability] =
         useState<OrganizationSlugAvailability>("idle");
 
@@ -106,12 +106,15 @@ export default function OrganizationSettings({
 
     const [saveError, setSaveError] = useState<string | null>(null);
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>(
-        {}
+        {},
     );
 
     const [isSaving, setIsSaving] = useState(false);
     const [isRegistered, setIsRegistered] = useState(false);
     const [isInitialized, setIsInitialized] = useState(false);
+
+    const isFirstSlugCheck = useRef(true);
+    const slugRequestId = useRef(0);
 
     useEffect(() => {
         try {
@@ -123,22 +126,13 @@ export default function OrganizationSettings({
 
             const parsed = JSON.parse(storedUser);
 
-            const user: StoredUser =
-                parsed?.data ?? parsed;
+            const user: StoredUser = parsed?.data ?? parsed;
 
-            /*
-             * User fields must be loaded independently from
-             * organization fields.
-             */
             setUserName(user?.name ?? "");
             setUserEmail(user?.email ?? "");
 
             const organization = user?.organization;
 
-            /*
-             * User may not have an organization yet.
-             * Do not return before loading user fields.
-             */
             if (!organization) {
                 return;
             }
@@ -150,32 +144,32 @@ export default function OrganizationSettings({
             setLegalName(
                 organization.legalName ??
                 organization.legal_name ??
-                ""
+                "",
             );
 
             setTaxId(
                 organization.taxId ??
                 organization.tax_id ??
-                ""
+                "",
             );
 
             setBusinessType(
                 organization.businessType ??
                 organization.business_type ??
-                "company"
+                "company",
             );
 
             setPhoneNumber(
                 organization.phoneNumber ??
                 organization.phone_number ??
-                ""
+                "",
             );
 
             setIsRegistered(true);
         } catch (error) {
             console.error(
                 "Failed to load user/organization from localStorage:",
-                error
+                error,
             );
         } finally {
             setIsInitialized(true);
@@ -183,7 +177,14 @@ export default function OrganizationSettings({
     }, []);
 
     useEffect(() => {
+        // Skip the initial render and the slug loaded from localStorage.
+        if (isFirstSlugCheck.current) {
+            isFirstSlugCheck.current = false;
+            return;
+        }
+
         const slug = organizationSlug.trim();
+        const requestId = ++slugRequestId.current;
 
         setSaveError(null);
 
@@ -205,10 +206,12 @@ export default function OrganizationSettings({
 
             try {
                 const response = await apiFetch(
-                    `organization/onboarding/check-slug?slug=${encodeURIComponent(
-                        slug
-                    )}`
+                    `organization/onboarding/check-slug?slug=${encodeURIComponent(slug)}`,
                 );
+
+                if (requestId !== slugRequestId.current) {
+                    return;
+                }
 
                 if (!response.ok) {
                     setOrganizationSlugAvailability("idle");
@@ -217,15 +220,21 @@ export default function OrganizationSettings({
 
                 const data = await response.json();
 
+                if (requestId !== slugRequestId.current) {
+                    return;
+                }
+
                 setOrganizationSlugAvailability(
-                    data.exists === false
-                        ? "available"
-                        : "unavailable"
+                    data.exists === false ? "available" : "unavailable",
                 );
             } catch (error) {
+                if (requestId !== slugRequestId.current) {
+                    return;
+                }
+
                 console.error(
                     "Organization slug availability check failed:",
-                    error
+                    error,
                 );
 
                 setOrganizationSlugAvailability("idle");
@@ -249,21 +258,17 @@ export default function OrganizationSettings({
         if (!name) {
             errors.name = "Organization name is required.";
         } else if (name.length < MIN_ORGANIZATION_NAME_LENGTH) {
-            errors.name =
-                `Organization name must be at least ${MIN_ORGANIZATION_NAME_LENGTH} characters.`;
+            errors.name = `Organization name must be at least ${MIN_ORGANIZATION_NAME_LENGTH} characters.`;
         } else if (name.length > MAX_ORGANIZATION_NAME_LENGTH) {
-            errors.name =
-                `Organization name must not exceed ${MAX_ORGANIZATION_NAME_LENGTH} characters.`;
+            errors.name = `Organization name must not exceed ${MAX_ORGANIZATION_NAME_LENGTH} characters.`;
         }
 
         if (!slug) {
             errors.slug = "Organization slug is required.";
         } else if (slug.length < MIN_SLUG_LENGTH) {
-            errors.slug =
-                `Organization slug must be at least ${MIN_SLUG_LENGTH} characters.`;
+            errors.slug = `Organization slug must be at least ${MIN_SLUG_LENGTH} characters.`;
         } else if (slug.length > MAX_SLUG_LENGTH) {
-            errors.slug =
-                `Organization slug must not exceed ${MAX_SLUG_LENGTH} characters.`;
+            errors.slug = `Organization slug must not exceed ${MAX_SLUG_LENGTH} characters.`;
         } else if (!SLUG_REGEX.test(slug)) {
             errors.slug =
                 "Organization slug can only contain lowercase letters, numbers and hyphens.";
@@ -277,11 +282,9 @@ export default function OrganizationSettings({
         if (!legalNameValue) {
             errors.legal_name = "Legal name is required.";
         } else if (legalNameValue.length < MIN_LEGAL_NAME_LENGTH) {
-            errors.legal_name =
-                `Legal name must be at least ${MIN_LEGAL_NAME_LENGTH} characters.`;
+            errors.legal_name = `Legal name must be at least ${MIN_LEGAL_NAME_LENGTH} characters.`;
         } else if (legalNameValue.length > MAX_LEGAL_NAME_LENGTH) {
-            errors.legal_name =
-                `Legal name must not exceed ${MAX_LEGAL_NAME_LENGTH} characters.`;
+            errors.legal_name = `Legal name must not exceed ${MAX_LEGAL_NAME_LENGTH} characters.`;
         }
 
         if (!taxIdValue) {
@@ -290,8 +293,7 @@ export default function OrganizationSettings({
             taxIdValue.length < MIN_TAX_ID_LENGTH ||
             taxIdValue.length > MAX_TAX_ID_LENGTH
         ) {
-            errors.tax_id =
-                `Tax ID must be between ${MIN_TAX_ID_LENGTH} and ${MAX_TAX_ID_LENGTH} characters.`;
+            errors.tax_id = `Tax ID must be between ${MIN_TAX_ID_LENGTH} and ${MAX_TAX_ID_LENGTH} characters.`;
         } else if (
             !DNI_REGEX.test(taxIdValue) &&
             !NIE_REGEX.test(taxIdValue) &&
@@ -304,9 +306,7 @@ export default function OrganizationSettings({
         if (!businessType) {
             errors.business_type = "Business type is required.";
         } else if (
-            !["company", "individual", "non_profit"].includes(
-                businessType
-            )
+            !["company", "individual", "non_profit"].includes(businessType)
         ) {
             errors.business_type = "Invalid business type.";
         }
@@ -314,20 +314,15 @@ export default function OrganizationSettings({
         if (!phoneValue) {
             errors.phone_number = "Phone number is required.";
         } else {
-            const normalizedPhone = phoneValue.replace(
-                /[\s().-]/g,
-                ""
-            );
+            const normalizedPhone = phoneValue.replace(/[\s().-]/g, "");
 
             if (
                 normalizedPhone.length < MIN_PHONE_LENGTH ||
                 normalizedPhone.length > MAX_PHONE_LENGTH
             ) {
-                errors.phone_number =
-                    `Phone number must be between ${MIN_PHONE_LENGTH} and ${MAX_PHONE_LENGTH} digits.`;
+                errors.phone_number = `Phone number must be between ${MIN_PHONE_LENGTH} and ${MAX_PHONE_LENGTH} digits.`;
             } else if (!PHONE_REGEX.test(phoneValue)) {
-                errors.phone_number =
-                    "Please enter a valid phone number.";
+                errors.phone_number = "Please enter a valid phone number.";
             }
         }
 
@@ -336,9 +331,6 @@ export default function OrganizationSettings({
         return Object.keys(errors).length === 0;
     };
 
-    /*
-     * Validate automatically whenever a form value changes.
-     */
     useEffect(() => {
         if (!isInitialized || isRegistered) {
             return;
@@ -387,7 +379,7 @@ export default function OrganizationSettings({
                         business_type: businessType,
                         phone_number: phoneNumber.trim(),
                     }),
-                }
+                },
             );
 
             const data = await response.json().catch(() => null);
@@ -395,43 +387,32 @@ export default function OrganizationSettings({
             if (!response.ok) {
                 if (response.status === 422) {
                     const backendErrors =
-                        data?.errors ??
-                        data?.data?.errors ??
-                        {};
+                        data?.errors ?? data?.data?.errors ?? {};
 
                     setFieldErrors(backendErrors);
 
                     setSaveError(
                         data?.message ??
-                        "Please check the form and try again."
+                        "Please check the form and try again.",
                     );
 
                     return;
                 }
 
                 throw new Error(
-                    data?.message ??
-                    "Unable to save the organization."
+                    data?.message ?? "Unable to save the organization.",
                 );
             }
 
-            /*
-             * Refresh the authenticated user so the new
-             * organization/onboarding state is stored locally.
-             */
-            const meResponse = await apiFetch(
-                "organization/auth/me"
-            );
+            const meResponse = await apiFetch("organization/auth/me");
 
             if (meResponse.ok) {
                 const meData = await meResponse.json();
-
-                const updatedUser =
-                    meData.data ?? meData;
+                const updatedUser = meData.data ?? meData;
 
                 localStorage.setItem(
                     USER_STORAGE_KEY,
-                    JSON.stringify(updatedUser)
+                    JSON.stringify(updatedUser),
                 );
 
                 setUserName(updatedUser?.name ?? "");
@@ -442,14 +423,12 @@ export default function OrganizationSettings({
             setFieldErrors({});
             setSaveError(null);
 
-            window.dispatchEvent(
-                new Event("organization-registered")
-            );
+            window.dispatchEvent(new Event("organization-registered"));
         } catch (error) {
             setSaveError(
                 error instanceof Error
                     ? error.message
-                    : "Unable to save the organization."
+                    : "Unable to save the organization.",
             );
         } finally {
             setIsSaving(false);
@@ -478,7 +457,6 @@ export default function OrganizationSettings({
             </div>
 
             <div className="space-y-6">
-                {/* Organization */}
                 <div>
                     <div className="grid gap-5 md:grid-cols-2">
                         <div>
@@ -494,23 +472,15 @@ export default function OrganizationSettings({
                                 name="name"
                                 type="text"
                                 value={organizationName}
-                                minLength={
-                                    MIN_ORGANIZATION_NAME_LENGTH
-                                }
-                                maxLength={
-                                    MAX_ORGANIZATION_NAME_LENGTH
-                                }
+                                minLength={MIN_ORGANIZATION_NAME_LENGTH}
+                                maxLength={MAX_ORGANIZATION_NAME_LENGTH}
                                 disabled={isRegistered}
-                                onChange={(event) => {
-                                    setOrganizationName(
-                                        event.target.value
-                                    );
-                                }}
+                                onChange={(event) =>
+                                    setOrganizationName(event.target.value)
+                                }
                                 placeholder={t.namePlaceholder}
                                 autoComplete="organization"
-                                className={`${inputClassName} ${fieldErrors.name
-                                        ? errorClassName
-                                        : ""
+                                className={`${inputClassName} ${fieldErrors.name ? errorClassName : ""
                                     }`}
                             />
 
@@ -538,33 +508,24 @@ export default function OrganizationSettings({
                                 maxLength={MAX_SLUG_LENGTH}
                                 disabled={isRegistered}
                                 onChange={(event) => {
-                                    const value =
-                                        event.target.value
-                                            .toLowerCase()
-                                            .replace(
-                                                /\s+/g,
-                                                "-"
-                                            )
-                                            .replace(
-                                                /[^a-z0-9-]/g,
-                                                ""
-                                            );
+                                    const value = event.target.value
+                                        .toLowerCase()
+                                        .replace(/\s+/g, "-")
+                                        .replace(/[^a-z0-9-]/g, "");
 
                                     setOrganizationSlug(value);
                                 }}
                                 placeholder={t.slugPlaceholder}
                                 autoComplete="off"
-                                className={`${inputClassName} ${fieldErrors.slug
-                                        ? errorClassName
-                                        : ""
+                                className={`${inputClassName} ${fieldErrors.slug ? errorClassName : ""
                                     }`}
                             />
 
                             {!isRegistered &&
-                                organizationSlug.trim()
-                                    .length >= MIN_SLUG_LENGTH &&
-                                organizationSlug.trim()
-                                    .length <= MAX_SLUG_LENGTH && (
+                                organizationSlug.trim().length >=
+                                MIN_SLUG_LENGTH &&
+                                organizationSlug.trim().length <=
+                                MAX_SLUG_LENGTH && (
                                     <div className="mt-2 text-sm">
                                         {organizationSlugAvailability ===
                                             "checking" && (
@@ -584,8 +545,8 @@ export default function OrganizationSettings({
                                         {organizationSlugAvailability ===
                                             "unavailable" && (
                                                 <span className="text-red-600">
-                                                    Organization slug is
-                                                    already taken.
+                                                    Organization slug is already
+                                                    taken.
                                                 </span>
                                             )}
                                     </div>
@@ -608,7 +569,6 @@ export default function OrganizationSettings({
                     disabled={isRegistered}
                 />
 
-                {/* Business */}
                 <div className="border-t border-gray-100 pt-6">
                     <div className="mb-5">
                         <h4 className="text-sm font-semibold text-gray-900">
@@ -634,22 +594,13 @@ export default function OrganizationSettings({
                                 name="legal_name"
                                 type="text"
                                 value={legalName}
-                                minLength={
-                                    MIN_LEGAL_NAME_LENGTH
-                                }
-                                maxLength={
-                                    MAX_LEGAL_NAME_LENGTH
-                                }
+                                minLength={MIN_LEGAL_NAME_LENGTH}
+                                maxLength={MAX_LEGAL_NAME_LENGTH}
                                 disabled={isRegistered}
-                                onChange={(event) => {
-                                    setLegalName(
-                                        event.target.value
-                                    );
-                                }}
-                                placeholder={
-                                    t.business
-                                        .legalNamePlaceholder
+                                onChange={(event) =>
+                                    setLegalName(event.target.value)
                                 }
+                                placeholder={t.business.legalNamePlaceholder}
                                 autoComplete="organization"
                                 className={`${inputClassName} ${fieldErrors.legal_name
                                         ? errorClassName
@@ -680,24 +631,16 @@ export default function OrganizationSettings({
                                 minLength={MIN_TAX_ID_LENGTH}
                                 maxLength={MAX_TAX_ID_LENGTH}
                                 disabled={isRegistered}
-                                onChange={(event) => {
+                                onChange={(event) =>
                                     setTaxId(
                                         event.target.value
                                             .toUpperCase()
-                                            .replace(
-                                                /\s+/g,
-                                                ""
-                                            )
-                                    );
-                                }}
-                                placeholder={
-                                    t.business
-                                        .taxIdPlaceholder
+                                            .replace(/\s+/g, ""),
+                                    )
                                 }
+                                placeholder={t.business.taxIdPlaceholder}
                                 autoComplete="off"
-                                className={`${inputClassName} ${fieldErrors.tax_id
-                                        ? errorClassName
-                                        : ""
+                                className={`${inputClassName} ${fieldErrors.tax_id ? errorClassName : ""
                                     }`}
                             />
 
@@ -721,11 +664,9 @@ export default function OrganizationSettings({
                                 name="business_type"
                                 value={businessType}
                                 disabled={isRegistered}
-                                onChange={(event) => {
-                                    setBusinessType(
-                                        event.target.value
-                                    );
-                                }}
+                                onChange={(event) =>
+                                    setBusinessType(event.target.value)
+                                }
                                 className={`${selectClassName} ${fieldErrors.business_type
                                         ? errorClassName
                                         : ""
@@ -766,14 +707,11 @@ export default function OrganizationSettings({
                                 value={phoneNumber}
                                 maxLength={MAX_PHONE_LENGTH}
                                 disabled={isRegistered}
-                                onChange={(event) => {
-                                    setPhoneNumber(
-                                        event.target.value
-                                    );
-                                }}
+                                onChange={(event) =>
+                                    setPhoneNumber(event.target.value)
+                                }
                                 placeholder={
-                                    t.business
-                                        .phoneNumberPlaceholder
+                                    t.business.phoneNumberPlaceholder
                                 }
                                 autoComplete="tel"
                                 className={`${inputClassName} ${fieldErrors.phone_number

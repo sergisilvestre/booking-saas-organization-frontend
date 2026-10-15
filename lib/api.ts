@@ -3,9 +3,12 @@ const API_URL =
     ? process.env.INTERNAL_API_URL
     : process.env.NEXT_PUBLIC_API_URL;
 
+const ORGANIZATION_ID_STORAGE_KEY = "organization_id";
+
 type ApiFetchOptions = RequestInit & {
   auth?: boolean;
   showLoading?: boolean;
+  organization?: boolean;
 };
 
 let loadingCount = 0;
@@ -19,7 +22,6 @@ export function setLoadingListener(
 
 function startLoading(): void {
   loadingCount++;
-
   loadingListener?.(true);
 }
 
@@ -41,19 +43,29 @@ export async function apiFetch(
 ): Promise<Response> {
   const {
     auth = true,
-    showLoading = false,
+    showLoading = true,
+    organization = false,
     headers,
     ...fetchOptions
   } = options;
+
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+  if (auth && !token) {
+    return new Response(JSON.stringify({ message: "Unauthenticated." }), {
+      status: 401,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
 
   if (showLoading) {
     startLoading();
   }
 
   try {
-    const token =
-      typeof window !== "undefined" ? localStorage.getItem("token") : null;
-
     const requestHeaders = new Headers(headers);
 
     requestHeaders.set("Accept", "application/json");

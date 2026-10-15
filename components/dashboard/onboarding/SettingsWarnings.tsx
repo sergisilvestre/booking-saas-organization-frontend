@@ -2,10 +2,10 @@
 
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { getOnboardingStatus } from "@/lib/onboarding";
+import EmailVerificationWarning from "./EmailVerificationWarning";
+import OrganizationWarning from "./OrganizationWarning";
+import StripeWarning from "./StripeWarning";
 
-import EmailVerificationWarning from "@/components/onboarding/EmailVerificationWarning";
-import OrganizationWarning from "@/components/onboarding/OrganizationWarning";
-import StripeWarning from "@/components/onboarding/StripeWarning";
 
 export default function SettingsWarnings() {
     const { user, loadingUser } = useCurrentUser();

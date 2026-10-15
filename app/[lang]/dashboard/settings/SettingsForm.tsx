@@ -5,6 +5,7 @@ import OrganizationSettings from "./OrganizationSettings";
 import AccountSettings from "./AccountSettings";
 import SecuritySettings from "./SecuritySettings";
 import DangerZone from "./DangerZone";
+import GoogleAccountSettings from "./GoogleAccountSettings";
 
 type User = {
     id: string;
@@ -48,6 +49,12 @@ type Props = {
             email: string;
             emailPlaceholder: string;
             save: string;
+        };
+        google: {
+            title: string;
+            description: string;
+            connect: string;
+            connecting: string;
         };
         security: {
             title: string;
@@ -102,6 +109,11 @@ export default function SettingsForm({
                 translations={t.account}
                 user={user}
             />
+
+            <GoogleAccountSettings
+                translations={t.google}
+            />
+
 
             <SecuritySettings
                 translations={t.security}

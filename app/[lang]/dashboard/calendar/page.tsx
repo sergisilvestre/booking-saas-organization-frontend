@@ -387,14 +387,6 @@ export default function CalendarPage({ lang }: Props) {
 
             closeBookingForm();
 
-            /*
-             * Later:
-             * refresh FullCalendar events here.
-             */
-            console.log(
-                "Booking created:",
-                payload,
-            );
         } catch (error) {
             console.error(error);
         }

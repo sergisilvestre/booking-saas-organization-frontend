@@ -1,28 +1,23 @@
+
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { apiFetch } from "@/lib/api";
+import { CONFIG_OPTIONS_STORAGE_KEY, USER_LANGUAGE_STORAGE_KEY } from "@/lib/storage-keys";
 
 type ConfigOptions = {
     languages: string[];
     default_language: string;
 };
 
-const CONFIG_OPTIONS_STORAGE_KEY = "config_options";
-const USER_LANGUAGE_STORAGE_KEY = "user_language";
-
-function getBrowserLanguage(
-    languages: string[]
-): string | null {
+function getBrowserLanguage(languages: string[]): string | null {
     const browserLanguages = navigator.languages?.length
         ? navigator.languages
         : [navigator.language];
 
     for (const browserLanguage of browserLanguages) {
-        const language = browserLanguage
-            .toLowerCase()
-            .split("-")[0];
+        const language = browserLanguage.toLowerCase().split("-")[0];
 
         if (languages.includes(language)) {
             return language;
@@ -32,6 +27,18 @@ function getBrowserLanguage(
     return null;
 }
 
+function getLocalizedPath(pathname: string, newLang: string): string {
+    const segments = pathname.split("/");
+
+    if (segments.length > 1 && segments[1]) {
+        segments[1] = newLang;
+    } else {
+        segments[1] = newLang;
+    }
+
+    return segments.join("/");
+}
+
 export default function LanguageSwitcher({
     currentLang,
 }: {
@@ -39,149 +46,109 @@ export default function LanguageSwitcher({
 }) {
     const router = useRouter();
     const pathname = usePathname();
+    const searchParams = useSearchParams();
 
     const [languages, setLanguages] = useState<string[]>([]);
-    const [selectedLanguage, setSelectedLanguage] =
-        useState(currentLang);
+    const [selectedLanguage, setSelectedLanguage] = useState(currentLang);
 
     useEffect(() => {
-        const initializeLanguage = (
-            config: ConfigOptions
-        ) => {
-            setLanguages(config.languages);
+        setSelectedLanguage(currentLang);
+    }, [currentLang]);
 
-            const storedLanguage = localStorage.getItem(
-                USER_LANGUAGE_STORAGE_KEY
-            );
+    useEffect(() => {
+        let cancelled = false;
 
-            /*
-             * The user already has a stored language preference.
-             * Always use it instead of detecting the browser language.
-             */
-            if (
-                storedLanguage &&
-                config.languages.includes(storedLanguage)
-            ) {
-                setSelectedLanguage(storedLanguage);
+        function initializeLanguage() {
+            try {
+                const storedOptions = localStorage.getItem(
+                    CONFIG_OPTIONS_STORAGE_KEY,
+                );
 
-                /*
-                 * Keep the URL locale synchronized with the
-                 * stored language preference.
-                 */
-                if (storedLanguage !== currentLang) {
-                    const segments = pathname.split("/");
-
-                    segments[1] = storedLanguage;
-
-                    router.replace(segments.join("/"));
+                if (!storedOptions) {
+                    console.error(
+                        "Configuration options not found in localStorage.",
+                    );
+                    return;
                 }
 
-                return;
-            }
+                const config = JSON.parse(storedOptions) as ConfigOptions;
 
-            /*
-             * First visit:
-             * detect the browser language.
-             */
-            const browserLanguage = getBrowserLanguage(
-                config.languages
-            );
+                if (
+                    !Array.isArray(config.languages) ||
+                    config.languages.length === 0
+                ) {
+                    console.error("Invalid configuration languages.");
+                    return;
+                }
 
-            const language =
-                browserLanguage ?? config.default_language;
+                if (cancelled) return;
 
-            localStorage.setItem(
-                USER_LANGUAGE_STORAGE_KEY,
-                language
-            );
+                setLanguages(config.languages);
 
-            setSelectedLanguage(language);
+                const storedLanguage = localStorage.getItem(
+                    USER_LANGUAGE_STORAGE_KEY,
+                );
 
-            /*
-             * Redirect to the same route using the detected
-             * language when it differs from the current locale.
-             *
-             * Example:
-             * /ca/dashboard -> /en/dashboard
-             */
-            if (language !== currentLang) {
-                const segments = pathname.split("/");
+                const language =
+                    storedLanguage &&
+                        config.languages.includes(storedLanguage)
+                        ? storedLanguage
+                        : getBrowserLanguage(config.languages) ??
+                        config.default_language;
 
-                segments[1] = language;
+                if (!config.languages.includes(language)) {
+                    return;
+                }
 
-                router.replace(segments.join("/"));
-            }
-        };
+                localStorage.setItem(USER_LANGUAGE_STORAGE_KEY, language);
 
-        const storedOptions = localStorage.getItem(
-            CONFIG_OPTIONS_STORAGE_KEY
-        );
-
-        if (storedOptions) {
-            try {
-                const config: ConfigOptions =
-                    JSON.parse(storedOptions);
-
-                initializeLanguage(config);
-
-                return;
-            } catch {
-                localStorage.removeItem(
-                    CONFIG_OPTIONS_STORAGE_KEY
+                if (language !== currentLang) {
+                    router.replace(
+                        getLocalizedPath(pathname, language),
+                        { scroll: false },
+                    );
+                }
+            } catch (error) {
+                console.error(
+                    "Unable to initialize language:",
+                    error,
                 );
             }
         }
 
-        const loadLanguages = async () => {
-            try {
-                const response = await apiFetch(
-                    "config/options",
-                    {
-                        auth: false,
-                    }
-                );
+        initializeLanguage();
 
-                if (!response.ok) {
-                    throw new Error(
-                        "Failed to load config options"
-                    );
-                }
-
-                const config: ConfigOptions =
-                    await response.json();
-
-                localStorage.setItem(
-                    CONFIG_OPTIONS_STORAGE_KEY,
-                    JSON.stringify(config)
-                );
-
-                initializeLanguage(config);
-            } catch {
-                setLanguages([]);
-            }
+        return () => {
+            cancelled = true;
         };
+    }, []);
 
-        loadLanguages();
-    }, [currentLang, pathname, router]);
+    const handleChange = useCallback(
+        (event: React.ChangeEvent<HTMLSelectElement>) => {
+            const newLang = event.target.value;
 
-    const handleChange = (
-        event: React.ChangeEvent<HTMLSelectElement>
-    ) => {
-        const newLang = event.target.value;
+            if (
+                !languages.includes(newLang) ||
+                newLang === currentLang
+            ) {
+                return;
+            }
 
-        localStorage.setItem(
-            USER_LANGUAGE_STORAGE_KEY,
-            newLang
-        );
+            // Persist the preference immediately.
+            localStorage.setItem(USER_LANGUAGE_STORAGE_KEY, newLang);
+            setSelectedLanguage(newLang);
 
-        setSelectedLanguage(newLang);
+            const localizedPath = getLocalizedPath(pathname, newLang);
+            const queryString = searchParams.toString();
+            const destination = queryString
+                ? `${localizedPath}?${queryString}`
+                : localizedPath;
 
-        const segments = pathname.split("/");
-
-        segments[1] = newLang;
-
-        router.push(segments.join("/"));
-    };
+            // Navigate immediately; no API request is needed here.
+            router.replace(destination, { scroll: false });
+        },
+        [languages, currentLang, pathname, searchParams, router],
+    );
 
     if (languages.length === 0) {
         return null;
@@ -195,10 +162,7 @@ export default function LanguageSwitcher({
             aria-label="Select language"
         >
             {languages.map((language) => (
-                <option
-                    key={language}
-                    value={language}
-                >
+                <option key={language} value={language}>
                     {language.toUpperCase()}
                 </option>
             ))}

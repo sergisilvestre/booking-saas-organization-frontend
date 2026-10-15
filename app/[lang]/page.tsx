@@ -184,14 +184,14 @@ export default async function HomePage({
             <LanguageSwitcher currentLang={lang} />
 
             <Link
-              href={`/${lang}/login`}
+              href={`/${lang}/auth/login`}
               className="hidden px-4 py-2 text-sm font-medium text-gray-700 transition hover:text-gray-900 sm:block"
             >
               {t("header.login")}
             </Link>
 
             <Link
-              href={`/${lang}/register`}
+              href={`/${lang}/auth/register`}
               className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800"
             >
               {t("header.register")}
@@ -221,7 +221,7 @@ export default async function HomePage({
 
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
-                href={`/${lang}/register`}
+                href={`/${lang}/auth/register`}
                 className="w-full rounded-xl bg-gray-900 px-7 py-3.5 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-gray-800 sm:w-auto"
               >
                 {t("hero.register")}
@@ -453,7 +453,7 @@ export default async function HomePage({
                   </div>
 
                   <Link
-                    href={`/${lang}/register`}
+                    href={`/${lang}/auth/register`}
                     className={`mt-8 rounded-xl px-5 py-3 text-center text-sm font-semibold transition ${highlighted
                         ? "bg-gray-900 text-white hover:bg-gray-800"
                         : "border border-gray-200 text-gray-700 hover:bg-gray-50"
@@ -498,7 +498,7 @@ export default async function HomePage({
           </p>
 
           <Link
-            href={`/${lang}/register`}
+            href={`/${lang}/auth/register`}
             className="mt-8 inline-flex rounded-xl bg-white px-7 py-3.5 text-sm font-semibold text-gray-900 transition hover:bg-gray-100"
           >
             {t("cta.button")}

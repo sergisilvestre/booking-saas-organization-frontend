@@ -6,6 +6,7 @@ import "./globals.css";
 
 import { LoadingProvider } from "@/components/providers/LoadingProvider";
 import { CurrentUserProvider } from "@/components/providers/CurrentUserProvider";
+import { ConfigOptionsProvider } from "@/components/providers/ConfigOptionsProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,13 +47,16 @@ export default async function LangLayout({
     >
       <body className="flex min-h-full flex-col">
         <NextIntlClientProvider
+          key={lang}
           locale={lang}
           messages={messages}
         >
           <LoadingProvider>
-            <CurrentUserProvider>
-              {children}
-            </CurrentUserProvider>
+            <ConfigOptionsProvider>
+              <CurrentUserProvider>
+                {children}
+              </CurrentUserProvider>
+            </ConfigOptionsProvider>
           </LoadingProvider>
         </NextIntlClientProvider>
       </body>

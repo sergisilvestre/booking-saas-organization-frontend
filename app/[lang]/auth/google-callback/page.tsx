@@ -138,7 +138,7 @@ export default function GoogleCallbackPage() {
                 );
 
                 router.replace(
-                    `/${params.lang}/login?error=google_auth_failed`
+                    `/${params.lang}/auth/login?error=google_auth_failed`
                 );
             }
         };

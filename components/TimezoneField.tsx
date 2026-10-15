@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { apiFetch } from "@/lib/api";
 
 type Props = {
     value: string;
@@ -25,18 +24,20 @@ const CONFIG_OPTIONS_STORAGE_KEY = "config_options";
 const USER_STORAGE_KEY = "user";
 
 function getUtcOffset(timeZone: string): string {
-    const date = new Date();
+    try {
+        const parts = new Intl.DateTimeFormat("en-US", {
+            timeZone,
+            timeZoneName: "longOffset",
+        }).formatToParts(new Date());
 
-    const parts = new Intl.DateTimeFormat("en-US", {
-        timeZone,
-        timeZoneName: "longOffset",
-    }).formatToParts(date);
+        const offset = parts.find(
+            (part) => part.type === "timeZoneName",
+        )?.value;
 
-    const offset = parts.find(
-        (part) => part.type === "timeZoneName"
-    )?.value;
-
-    return offset?.replace("GMT", "UTC") ?? "UTC";
+        return offset?.replace("GMT", "UTC") ?? "UTC";
+    } catch {
+        return "UTC";
+    }
 }
 
 function getStoredUser(): StoredUser | null {
@@ -66,7 +67,7 @@ function saveUserTimezone(timezone: string): void {
         JSON.stringify({
             ...user,
             timezone,
-        })
+        }),
     );
 }
 
@@ -74,11 +75,9 @@ function detectTimezone(timezones: string[]): string | null {
     const detectedTimezone =
         Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-    if (detectedTimezone && timezones.includes(detectedTimezone)) {
-        return detectedTimezone;
-    }
-
-    return null;
+    return detectedTimezone && timezones.includes(detectedTimezone)
+        ? detectedTimezone
+        : null;
 }
 
 export default function TimezoneField({
@@ -92,52 +91,34 @@ export default function TimezoneField({
     const [timezones, setTimezones] = useState<string[]>([]);
 
     useEffect(() => {
-        const loadConfig = async () => {
-            let config: ConfigOptions | null = null;
+        const storedOptions = localStorage.getItem(
+            CONFIG_OPTIONS_STORAGE_KEY,
+        );
 
-            const storedOptions = localStorage.getItem(
-                CONFIG_OPTIONS_STORAGE_KEY
+        if (!storedOptions) {
+            console.error(
+                "Configuration options not found in localStorage.",
             );
+            return;
+        }
 
-            if (storedOptions) {
-                try {
-                    config = JSON.parse(storedOptions);
-                } catch {
-                    localStorage.removeItem(
-                        CONFIG_OPTIONS_STORAGE_KEY
-                    );
-                }
-            }
+        try {
+            const config = JSON.parse(
+                storedOptions,
+            ) as ConfigOptions;
 
-            if (!config) {
-                try {
-                    const response = await apiFetch("config/options", {
-                        auth: false,
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(
-                            "Failed to load config options"
-                        );
-                    }
-
-                    config = await response.json();
-
-                    localStorage.setItem(
-                        CONFIG_OPTIONS_STORAGE_KEY,
-                        JSON.stringify(config)
-                    );
-                } catch {
-                    setTimezones([]);
-                    return;
-                }
+            if (
+                !Array.isArray(config.timezones) ||
+                config.timezones.length === 0
+            ) {
+                console.error("Invalid configuration timezones.");
+                return;
             }
 
             setTimezones(config.timezones);
 
             const storedUser = getStoredUser();
 
-            // User already has a timezone.
             if (
                 storedUser?.timezone &&
                 config.timezones.includes(storedUser.timezone)
@@ -149,19 +130,28 @@ export default function TimezoneField({
                 return;
             }
 
-            // User has no timezone, detect it from the browser.
+            if (value && config.timezones.includes(value)) {
+                return;
+            }
+
             const detectedTimezone = detectTimezone(
-                config.timezones
+                config.timezones,
             );
 
-            if (detectedTimezone) {
-                onChange(detectedTimezone);
-                saveUserTimezone(detectedTimezone);
-            }
-        };
+            const initialTimezone =
+                detectedTimezone ?? config.default_timezone;
 
-        loadConfig();
-    }, [onChange, value]);
+            if (initialTimezone && config.timezones.includes(initialTimezone)) {
+                onChange(initialTimezone);
+                saveUserTimezone(initialTimezone);
+            }
+        } catch (error) {
+            console.error(
+                "Unable to initialize timezone options:",
+                error,
+            );
+        }
+    }, []);
 
     const timezoneOptions = useMemo(
         () =>
@@ -169,7 +159,7 @@ export default function TimezoneField({
                 value: timezone,
                 label: `${timezone} (${getUtcOffset(timezone)})`,
             })),
-        [timezones]
+        [timezones],
     );
 
     return (

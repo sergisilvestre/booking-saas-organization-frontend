@@ -45,7 +45,7 @@ export default function EmailVerificationPage() {
                 }
 
                 router.replace(
-                    `/${params.lang}/login?email_verified=true`
+                    `/${params.lang}/auth/login?email_verified=true`
                 );
             } catch (error) {
                 console.error(
@@ -54,7 +54,7 @@ export default function EmailVerificationPage() {
                 );
 
                 router.replace(
-                    `/${params.lang}/login?error=email_verification_failed`
+                    `/${params.lang}/auth/login?error=email_verification_failed`
                 );
             }
         };

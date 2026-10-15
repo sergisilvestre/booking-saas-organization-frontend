@@ -276,6 +276,41 @@
                 "title": "No hi ha tipus d'esdeveniment",
                 "description": "Crea el teu primer tipus d'esdeveniment per començar a rebre reserves.",
                 "action": "Crear tipus d'esdeveniment"
+            },
+            "form": {
+                "open": "Crear tipus d'esdeveniment",
+                "title": "Crear tipus d'esdeveniment",
+                "description": "Configura els detalls i les condicions de reserva.",
+                "close": "Tancar",
+                "name": "Nom",
+                "namePlaceholder": "Ex. Consulta inicial",
+                "slug": "URL de l'esdeveniment",
+                "slugPlaceholder": "ex. consulta-inicial",
+                "descriptionLabel": "Descripció",
+                "descriptionPlaceholder": "Descriu aquest tipus d'esdeveniment...",
+                "duration": "Durada",
+                "minutes": "{count, plural, one {# minut} other {# minuts}}",
+                "timezone": "Fus horari",
+                "availability": "Disponibilitat i reserves",
+                "bufferBefore": "Marge abans de la cita",
+                "bufferAfter": "Marge després de la cita",
+                "minimumNotice": "Antelació mínima",
+                "maximumDaysInAdvance": "Antelació màxima",
+                "isActive": "Tipus d'esdeveniment actiu",
+                "isActiveDescription": "Permet que els clients reservin aquest tipus d'esdeveniment.",
+                "cancel": "Cancel·lar",
+                "submit": "Crear tipus d'esdeveniment",
+                "days": "{count, plural, one {# dia} other {# dies}}",
+                "validation": {
+                    "nameRequired": "El nom és obligatori.",
+                    "slugRequired": "L'URL de l'esdeveniment és obligatòria.",
+                    "slugInvalid": "Utilitza només lletres minúscules, números i guions.",
+                    "durationRequired": "Selecciona una durada vàlida.",
+                    "invalidBuffer": "El marge ha de ser un número igual o superior a zero.",
+                    "invalidNotice": "L'antelació mínima ha de ser igual o superior a zero.",
+                    "invalidAdvance": "L'antelació màxima ha de ser d'almenys un dia.",
+                    "timezoneRequired": "Selecciona un fus horari."
+                }
             }
         },
         "availability": {
@@ -389,6 +424,12 @@
                 "description": "Gestiona la seguretat del teu compte.",
                 "changePassword": "Canviar la contrasenya"
             },
+            "google": {
+                "title": "Compte de Google",
+                "description": "Connecta el teu compte de Google per habilitar les integracions amb Google.",
+                "connect": "Connectar amb Google",
+                "connecting": "Connectant..."
+            },
             "danger": {
                 "title": "Zona de perill",
                 "description": "Les accions d'aquesta secció poden afectar permanentment el teu compte.",
@@ -448,5 +489,33 @@
                 "description": "Encara no tens cap factura."
             }
         }
+    },
+    "validation": {
+        "nameRequired": "El nom de l'organització és obligatori.",
+        "nameMin": "El nom ha de tenir com a mínim {min} caràcters.",
+        "nameMax": "El nom no pot superar els {max} caràcters.",
+        "slugRequired": "L'identificador de l'organització és obligatori.",
+        "slugMin": "L'identificador ha de tenir com a mínim {min} caràcters.",
+        "slugMax": "L'identificador no pot superar els {max} caràcters.",
+        "slugInvalid": "Només es permeten lletres minúscules, números i guions.",
+        "slugTaken": "Aquest identificador ja està en ús.",
+        "slugChecking": "Espera que es comprovi la disponibilitat de l'identificador.",
+        "legalNameRequired": "La raó social és obligatòria.",
+        "legalNameMin": "La raó social ha de tenir com a mínim {min} caràcters.",
+        "legalNameMax": "La raó social no pot superar els {max} caràcters.",
+        "taxIdRequired": "El NIF és obligatori.",
+        "taxIdLength": "El NIF ha de tenir entre {min} i {max} caràcters.",
+        "taxIdInvalid": "Introdueix un NIF, NIE o CIF espanyol vàlid.",
+        "businessTypeRequired": "El tipus de negoci és obligatori.",
+        "businessTypeInvalid": "El tipus de negoci no és vàlid.",
+        "phoneRequired": "El telèfon és obligatori.",
+        "phoneLength": "El telèfon ha de tenir entre {min} i {max} caràcters.",
+        "phoneInvalid": "Introdueix un número de telèfon vàlid.",
+        "slugCheckingStatus": "Comprovant la disponibilitat...",
+        "slugAvailable": "L'identificador està disponible.",
+        "slugUnavailable": "L'identificador ja està en ús.",
+        "checkForm": "Revisa el formulari i torna-ho a provar.",
+        "saveFailed": "No s'ha pogut desar l'organització.",
+        "saving": "Desant..."
     }
 }

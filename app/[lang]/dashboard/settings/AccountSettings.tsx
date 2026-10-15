@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
+import { CONFIG_OPTIONS_STORAGE_KEY, USER_LANGUAGE_STORAGE_KEY, USER_STORAGE_KEY, USER_TIMEZONE_STORAGE_KEY } from "@/lib/storage-keys";
 
 type User = {
     id: string;
@@ -35,11 +36,6 @@ type Props = {
     user: User | null;
 };
 
-const CONFIG_OPTIONS_STORAGE_KEY = "config_options";
-const USER_STORAGE_KEY = "user";
-const USER_LANGUAGE_STORAGE_KEY = "user_language";
-const USER_TIMEZONE_STORAGE_KEY = "user_timezone";
-
 export default function AccountSettings({
     translations: t,
     user,
@@ -58,10 +54,29 @@ export default function AccountSettings({
     useEffect(() => {
         let cancelled = false;
 
-        const initialize = (options: ConfigOptions) => {
-            if (cancelled) {
-                return;
+        try {
+            const storedOptions = localStorage.getItem(
+                CONFIG_OPTIONS_STORAGE_KEY,
+            );
+
+            if (!storedOptions) {
+                throw new Error(
+                    "Configuration options not found in localStorage.",
+                );
             }
+
+            const options: ConfigOptions = JSON.parse(storedOptions);
+
+            if (
+                !Array.isArray(options.languages) ||
+                !Array.isArray(options.timezones) ||
+                typeof options.default_language !== "string" ||
+                typeof options.default_timezone !== "string"
+            ) {
+                throw new Error("Invalid configuration options.");
+            }
+
+            if (cancelled) return;
 
             setConfig(options);
 
@@ -90,52 +105,13 @@ export default function AccountSettings({
             setCurrentTimezone(effectiveTimezone);
 
             setInitialized(true);
-        };
+        } catch (error) {
+            console.error("Failed to load config options:", error);
 
-        const loadConfig = async () => {
-            const storedOptions = localStorage.getItem(
-                CONFIG_OPTIONS_STORAGE_KEY,
-            );
-
-            if (storedOptions) {
-                try {
-                    const options: ConfigOptions = JSON.parse(storedOptions);
-                    initialize(options);
-                    return;
-                } catch {
-                    localStorage.removeItem(CONFIG_OPTIONS_STORAGE_KEY);
-                }
+            if (!cancelled) {
+                setInitialized(true);
             }
-
-            try {
-                const response = await apiFetch("config/options", {
-                    auth: false,
-                });
-
-                if (!response.ok) {
-                    throw new Error("Failed to load config options.");
-                }
-
-                const options: ConfigOptions = await response.json();
-
-                localStorage.setItem(
-                    CONFIG_OPTIONS_STORAGE_KEY,
-                    JSON.stringify(options),
-                );
-
-                initialize(options);
-            } catch (error) {
-                if (!cancelled) {
-                    console.error(
-                        "Failed to load config options:",
-                        error,
-                    );
-                    setInitialized(true);
-                }
-            }
-        };
-
-        void loadConfig();
+        }
 
         return () => {
             cancelled = true;

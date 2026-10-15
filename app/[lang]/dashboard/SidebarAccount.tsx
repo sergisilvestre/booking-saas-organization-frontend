@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import {
+    USER_STORAGE_KEY,
+    USER_LANGUAGE_STORAGE_KEY,
+} from "@/lib/storage-keys";
 
 type Props = {
     lang: string;
@@ -25,9 +29,6 @@ type User = {
     };
 };
 
-const USER_STORAGE_KEY = "user";
-const USER_LANGUAGE_STORAGE_KEY = "user_language";
-
 export default function SidebarAccount({ lang }: Props) {
     const router = useRouter();
     const pathname = usePathname();
@@ -44,7 +45,7 @@ export default function SidebarAccount({ lang }: Props) {
             localStorage.removeItem(USER_STORAGE_KEY);
             setUser(null);
             setLoading(false);
-            router.replace(`/${lang}/login`);
+            router.replace(`/ ${lang}/auth/login`);
             return;
         }
 
@@ -53,14 +54,18 @@ export default function SidebarAccount({ lang }: Props) {
         if (!cachedUser) {
             setUser(null);
             setLoading(false);
-            router.replace(`/${lang}/login`);
+            router.replace(`/${lang}/auth/login`);
             return;
         }
 
         try {
             const parsedUser: User = JSON.parse(cachedUser);
 
-            if (!parsedUser || typeof parsedUser.name !== "string" || typeof parsedUser.email !== "string") {
+            if (
+                !parsedUser ||
+                typeof parsedUser.name !== "string" ||
+                typeof parsedUser.email !== "string"
+            ) {
                 throw new Error("Invalid cached user data");
             }
 
@@ -91,19 +96,20 @@ export default function SidebarAccount({ lang }: Props) {
 
             localStorage.removeItem(USER_STORAGE_KEY);
             setUser(null);
-            router.replace(`/${lang}/login`);
+            router.replace(`/${lang}/auth/login`);
         } finally {
             setLoading(false);
         }
     }, [lang, pathname, router]);
 
-    async function handleLogout() {
+    function handleLogout() {
         setLoggingOut(true);
 
         localStorage.removeItem("token");
         localStorage.removeItem(USER_STORAGE_KEY);
+        localStorage.removeItem(USER_LANGUAGE_STORAGE_KEY);
 
-        router.replace(`/${lang}/login`);
+        router.replace(`/${lang}/auth/login`);
     }
 
     if (loading && !user) {

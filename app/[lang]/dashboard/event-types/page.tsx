@@ -1,4 +1,6 @@
+
 import { getTranslations } from "next-intl/server";
+import CreateEventTypeButton from "../../../../components/dashboard/event-types/CreateEventTypeButton";
 
 type Props = {
     params: Promise<{
@@ -16,7 +18,6 @@ export default async function EventTypesPage({ params }: Props) {
 
     return (
         <div>
-            {/* Header */}
             <div className="mb-8 flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight text-gray-900">
@@ -28,17 +29,10 @@ export default async function EventTypesPage({ params }: Props) {
                     </p>
                 </div>
 
-                <button
-                    type="button"
-                    className="rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800"
-                >
-                    {t("create")}
-                </button>
+                <CreateEventTypeButton />
             </div>
 
-            {/* Event types */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {/* Empty state */}
                 <div className="col-span-full rounded-2xl border border-gray-200 bg-white px-6 py-16 text-center shadow-sm">
                     <p className="text-sm font-medium text-gray-900">
                         {t("empty.title")}
@@ -48,12 +42,9 @@ export default async function EventTypesPage({ params }: Props) {
                         {t("empty.description")}
                     </p>
 
-                    <button
-                        type="button"
-                        className="mt-5 rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800"
-                    >
-                        {t("empty.action")}
-                    </button>
+                    <div className="mt-5">
+                        <CreateEventTypeButton />
+                    </div>
                 </div>
             </div>
         </div>

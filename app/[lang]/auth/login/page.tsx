@@ -63,7 +63,7 @@ export default async function LoginPage({ params }: Props) {
                             <p className="mt-8 text-center text-sm text-gray-500">
                                 {t("noAccount")}{" "}
                                 <Link
-                                    href={`/${lang}/register`}
+                                    href={`/${lang}/auth/register`}
                                     className="font-semibold text-gray-900 hover:underline"
                                 >
                                     {t("createAccount")}

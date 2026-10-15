@@ -274,9 +274,44 @@
             "subtitle": "Create and manage the booking types you offer.",
             "create": "Create event type",
             "empty": {
-                "title": "No event types",
-                "description": "Create your first event type to start accepting bookings.",
+                "title": "No event types yet",
+                "description": "Create your first event type to start receiving bookings.",
                 "action": "Create event type"
+            },
+            "form": {
+                "open": "Create event type",
+                "title": "Create event type",
+                "description": "Configure the details and booking conditions.",
+                "close": "Close",
+                "name": "Name",
+                "namePlaceholder": "e.g. Initial consultation",
+                "slug": "Event URL",
+                "slugPlaceholder": "e.g. initial-consultation",
+                "descriptionLabel": "Description",
+                "descriptionPlaceholder": "Describe this event type...",
+                "duration": "Duration",
+                "minutes": "{count, plural, one {# minute} other {# minutes}}",
+                "timezone": "Time zone",
+                "availability": "Availability and bookings",
+                "bufferBefore": "Buffer before appointment",
+                "bufferAfter": "Buffer after appointment",
+                "minimumNotice": "Minimum notice",
+                "maximumDaysInAdvance": "Maximum booking window",
+                "isActive": "Active event type",
+                "isActiveDescription": "Allow customers to book this event type.",
+                "cancel": "Cancel",
+                "submit": "Create event type",
+                "days": "{count, plural, one {# day} other {# days}}",
+                "validation": {
+                    "nameRequired": "Name is required.",
+                    "slugRequired": "Event URL is required.",
+                    "slugInvalid": "Use only lowercase letters, numbers, and hyphens.",
+                    "durationRequired": "Select a valid duration.",
+                    "invalidBuffer": "The buffer must be a number greater than or equal to zero.",
+                    "invalidNotice": "Minimum notice must be greater than or equal to zero.",
+                    "invalidAdvance": "The maximum booking window must be at least one day.",
+                    "timezoneRequired": "Select a time zone."
+                }
             }
         },
         "availability": {
@@ -385,6 +420,12 @@
                 "save": "Save changes",
                 "saving": "Saving changes ..."
             },
+            "google": {
+                "title": "Google account",
+                "description": "Connect your Google account to enable Google integrations.",
+                "connect": "Connect with Google",
+                "connecting": "Connecting..."
+            },
             "security": {
                 "title": "Security",
                 "description": "Manage your account security.",
@@ -446,5 +487,33 @@
                 "description": "You don't have any invoices yet."
             }
         }
+    },
+    "validation": {
+        "nameRequired": "The organization name is required.",
+        "nameMin": "The name must be at least {min} characters long.",
+        "nameMax": "The name cannot exceed {max} characters.",
+        "slugRequired": "The organization identifier is required.",
+        "slugMin": "The identifier must be at least {min} characters long.",
+        "slugMax": "The identifier cannot exceed {max} characters.",
+        "slugInvalid": "Only lowercase letters, numbers, and hyphens are allowed.",
+        "slugTaken": "This identifier is already in use.",
+        "slugChecking": "Wait until the identifier availability check is complete.",
+        "legalNameRequired": "The legal business name is required.",
+        "legalNameMin": "The legal business name must be at least {min} characters long.",
+        "legalNameMax": "The legal business name cannot exceed {max} characters.",
+        "taxIdRequired": "The tax identification number is required.",
+        "taxIdLength": "The tax identification number must be between {min} and {max} characters long.",
+        "taxIdInvalid": "Enter a valid Spanish NIF, NIE, or CIF.",
+        "businessTypeRequired": "The business type is required.",
+        "businessTypeInvalid": "The business type is invalid.",
+        "phoneRequired": "The phone number is required.",
+        "phoneLength": "The phone number must be between {min} and {max} characters long.",
+        "phoneInvalid": "Enter a valid phone number.",
+        "slugCheckingStatus": "Checking availability...",
+        "slugAvailable": "The identifier is available.",
+        "slugUnavailable": "The identifier is already in use.",
+        "checkForm": "Please check the form and try again.",
+        "saveFailed": "The organization could not be saved.",
+        "saving": "Saving..."
     }
 }

@@ -113,8 +113,8 @@
                 "placeholder": "Tu empresa"
             },
             "timezone": {
-                "label": "Timezone",
-                "hint": "S'utilitzarà per calcular correctament els horaris de les teves reserves."
+                "label": "Zona horaria",
+                "hint": "Se utilizará para calcular correctamente los horarios de tus reservas."
             },
             "password": {
                 "label": "Contraseña",
@@ -271,6 +271,46 @@
                 "title": "No hay tipos de evento",
                 "description": "Crea tu primer tipo de evento para empezar a recibir reservas.",
                 "action": "Crear tipo de evento"
+            },
+            "form": {
+                "open": "Crear tipo de evento",
+                "title": "Crear tipo de evento",
+                "description": "Configura los detalles y las condiciones de reserva.",
+                "close": "Cerrar",
+                "name": "Nombre",
+                "namePlaceholder": "Ej. Consulta inicial",
+                "slug": "URL del evento",
+                "slugPlaceholder": "ej. consulta-inicial",
+                "descriptionLabel": "Descripción",
+                "descriptionPlaceholder": "Describe este tipo de evento...",
+                "duration": "Duración",
+                "minutes": "{count, plural, one {# minuto} other {# minutos}}",
+                "timezone": "Zona horaria",
+                "timezonePlaceholder": "Selecciona una zona horaria",
+                "timezonesLoading": "Cargando zonas horarias...",
+                "timezonesUnavailable": "No hay zonas horarias disponibles.",
+                "availability": "Disponibilidad y reservas",
+                "bufferBefore": "Margen antes de la cita",
+                "bufferAfter": "Margen después de la cita",
+                "minimumNotice": "Antelación mínima",
+                "maximumDaysInAdvance": "Antelación máxima",
+                "isActive": "Tipo de evento activo",
+                "isActiveDescription": "Permite que los clientes reserven este tipo de evento.",
+                "payment": {
+                    "title": "Configuración del pago",
+                    "type": "Tipo de pago",
+                    "free": "Gratuito",
+                    "required": "Pago obligatorio",
+                    "price": "Precio",
+                    "currency": "Moneda"
+                },
+                "pricePlaceholder": "Ej. 25,00",
+                "currencyPlaceholder": "Selecciona una moneda",
+                "currenciesLoading": "Cargando monedas...",
+                "currenciesUnavailable": "No hay monedas disponibles.",
+                "cancel": "Cancelar",
+                "submit": "Crear tipo de evento",
+                "days": "{count, plural, one {# día} other {# días}}"
             }
         },
         "availability": {
@@ -379,6 +419,12 @@
                 "save": "Guardar cambios",
                 "saving": "Guardando cambios ..."
             },
+            "google": {
+                "title": "Cuenta de Google",
+                "description": "Conecta tu cuenta de Google para habilitar las integraciones con Google.",
+                "connect": "Conectar con Google",
+                "connecting": "Conectando..."
+            },
             "security": {
                 "title": "Seguridad",
                 "description": "Gestiona la seguridad de tu cuenta.",
@@ -443,5 +489,46 @@
                 "description": "Todavía no tienes ninguna factura."
             }
         }
+    },
+    "validation": {
+        "nameRequired": "El nombre de la organización es obligatorio.",
+        "nameMin": "El nombre debe tener al menos {min} caracteres.",
+        "nameMax": "El nombre no puede superar los {max} caracteres.",
+        "slugRequired": "El identificador de la organización es obligatorio.",
+        "slugMin": "El identificador debe tener al menos {min} caracteres.",
+        "slugMax": "El identificador no puede superar los {max} caracteres.",
+        "slugInvalid": "Solo se permiten letras minúsculas, números y guiones.",
+        "slugTaken": "Este identificador ya está en uso.",
+        "slugChecking": "Espera a que se compruebe la disponibilidad del identificador.",
+        "legalNameRequired": "La razón social es obligatoria.",
+        "legalNameMin": "La razón social debe tener al menos {min} caracteres.",
+        "legalNameMax": "La razón social no puede superar los {max} caracteres.",
+        "taxIdRequired": "El NIF es obligatorio.",
+        "taxIdLength": "El NIF debe tener entre {min} y {max} caracteres.",
+        "taxIdInvalid": "Introduce un NIF, NIE o CIF español válido.",
+        "businessTypeRequired": "El tipo de negocio es obligatorio.",
+        "businessTypeInvalid": "El tipo de negocio no es válido.",
+        "phoneRequired": "El teléfono es obligatorio.",
+        "phoneLength": "El teléfono debe tener entre {min} y {max} caracteres.",
+        "phoneInvalid": "Introduce un número de teléfono válido.",
+        "slugCheckingStatus": "Comprobando disponibilidad...",
+        "slugAvailable": "El identificador está disponible.",
+        "slugUnavailable": "El identificador ya está en uso.",
+        "checkForm": "Revisa el formulario e inténtalo de nuevo.",
+        "saveFailed": "No se ha podido guardar la organización.",
+        "saving": "Guardando...",
+        "eventTypeNameRequired": "El nombre del tipo de evento es obligatorio.",
+        "eventTypeSlugRequired": "La URL del evento es obligatoria.",
+        "eventTypeSlugInvalid": "Usa solo letras minúsculas, números y guiones.",
+        "eventTypeDurationRequired": "Selecciona una duración válida.",
+        "eventTypeInvalidBuffer": "El margen debe ser un número igual o superior a cero.",
+        "eventTypeInvalidNotice": "La antelación mínima debe ser igual o superior a cero.",
+        "eventTypeInvalidAdvance": "La antelación máxima debe ser de al menos un día.",
+        "eventTypeTimezoneRequired": "Selecciona una zona horaria.",
+        "eventTypeTimezoneInvalid": "Selecciona una zona horaria válida.",
+        "eventTypeCurrencyRequired": "Selecciona una moneda.",
+        "eventTypeCurrencyInvalid": "Selecciona una moneda válida.",
+        "eventTypePriceRequired": "Introduce un precio válido.",
+        "eventTypePriceInvalid": "El precio debe ser mayor que cero y tener un formato válido."
     }
 }

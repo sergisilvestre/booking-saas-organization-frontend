@@ -1,6 +1,8 @@
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import TimezoneField from "@/components/TimezoneField";
 import { apiFetch } from "@/lib/api";
@@ -85,9 +87,35 @@ const CIF_REGEX = /^[ABCDEFGHJNPQRSUVW]\d{7}[0-9A-J]$/;
 
 const PHONE_REGEX = /^\+?[0-9][0-9\s().-]{7,18}[0-9]$/;
 
+type ValidationKey =
+    | "nameRequired"
+    | "nameMin"
+    | "nameMax"
+    | "slugRequired"
+    | "slugMin"
+    | "slugMax"
+    | "slugInvalid"
+    | "slugTaken"
+    | "slugChecking"
+    | "legalNameRequired"
+    | "legalNameMin"
+    | "legalNameMax"
+    | "taxIdRequired"
+    | "taxIdLength"
+    | "taxIdInvalid"
+    | "businessTypeRequired"
+    | "businessTypeInvalid"
+    | "phoneRequired"
+    | "phoneLength"
+    | "phoneInvalid"
+    | "checkForm"
+    | "saveFailed";
+
 export default function OrganizationSettings({
     translations: t,
 }: Props) {
+    const tv = useTranslations("validation");
+
     const [userName, setUserName] = useState("");
     const [userEmail, setUserEmail] = useState("");
 
@@ -105,9 +133,7 @@ export default function OrganizationSettings({
     const [phoneNumber, setPhoneNumber] = useState("");
 
     const [saveError, setSaveError] = useState<string | null>(null);
-    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>(
-        {},
-    );
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
     const [isSaving, setIsSaving] = useState(false);
     const [isRegistered, setIsRegistered] = useState(false);
@@ -116,16 +142,155 @@ export default function OrganizationSettings({
     const isFirstSlugCheck = useRef(true);
     const slugRequestId = useRef(0);
 
+    const translateBackendError = (
+        field: string,
+        message: string,
+    ): string => {
+        const normalized = message.toLowerCase();
+
+        const isRequired =
+            normalized.includes("required") ||
+            normalized.includes("is required") ||
+            normalized.includes("obligatorio") ||
+            normalized.includes("obligatoria");
+
+        const isTooShort =
+            normalized.includes("at least") ||
+            normalized.includes("minimum") ||
+            normalized.includes("min:") ||
+            normalized.includes("min.") ||
+            normalized.includes("too short");
+
+        const isTooLong =
+            normalized.includes("at most") ||
+            normalized.includes("maximum") ||
+            normalized.includes("max:") ||
+            normalized.includes("max.") ||
+            normalized.includes("too long");
+
+        const isUnique =
+            normalized.includes("already been taken") ||
+            normalized.includes("already exists") ||
+            normalized.includes("has already been taken") ||
+            normalized.includes("unique") ||
+            normalized.includes("taken");
+
+        let key: ValidationKey = "checkForm";
+
+        switch (field) {
+            case "name":
+                if (isRequired) key = "nameRequired";
+                else if (isTooShort) key = "nameMin";
+                else if (isTooLong) key = "nameMax";
+                break;
+
+            case "slug":
+                if (isRequired) key = "slugRequired";
+                else if (isTooShort) key = "slugMin";
+                else if (isTooLong) key = "slugMax";
+                else if (isUnique) key = "slugTaken";
+                else if (
+                    normalized.includes("format") ||
+                    normalized.includes("regex") ||
+                    normalized.includes("lowercase") ||
+                    normalized.includes("invalid")
+                ) {
+                    key = "slugInvalid";
+                }
+                break;
+
+            case "legal_name":
+                if (isRequired) key = "legalNameRequired";
+                else if (isTooShort) key = "legalNameMin";
+                else if (isTooLong) key = "legalNameMax";
+                break;
+
+            case "tax_id":
+                if (isRequired) key = "taxIdRequired";
+                else if (isTooShort || isTooLong) key = "taxIdLength";
+                else key = "taxIdInvalid";
+                break;
+
+            case "business_type":
+                key = isRequired
+                    ? "businessTypeRequired"
+                    : "businessTypeInvalid";
+                break;
+
+            case "phone_number":
+                if (isRequired) key = "phoneRequired";
+                else if (isTooShort || isTooLong) key = "phoneLength";
+                else key = "phoneInvalid";
+                break;
+        }
+
+        switch (key) {
+            case "nameMin":
+                return tv(key, { min: MIN_ORGANIZATION_NAME_LENGTH });
+            case "nameMax":
+                return tv(key, { max: MAX_ORGANIZATION_NAME_LENGTH });
+            case "slugMin":
+                return tv(key, { min: MIN_SLUG_LENGTH });
+            case "slugMax":
+                return tv(key, { max: MAX_SLUG_LENGTH });
+            case "legalNameMin":
+                return tv(key, { min: MIN_LEGAL_NAME_LENGTH });
+            case "legalNameMax":
+                return tv(key, { max: MAX_LEGAL_NAME_LENGTH });
+            case "taxIdLength":
+                return tv(key, {
+                    min: MIN_TAX_ID_LENGTH,
+                    max: MAX_TAX_ID_LENGTH,
+                });
+            case "phoneLength":
+                return tv(key, {
+                    min: MIN_PHONE_LENGTH,
+                    max: MAX_PHONE_LENGTH,
+                });
+            default:
+                return tv(key);
+        }
+    };
+
+    const mapBackendErrors = (
+        backendErrors: Record<string, unknown>,
+    ): Record<string, string> => {
+        const result: Record<string, string> = {};
+
+        for (const field of [
+            "name",
+            "slug",
+            "legal_name",
+            "tax_id",
+            "business_type",
+            "phone_number",
+        ]) {
+            const value = backendErrors[field];
+
+            if (!value) continue;
+
+            const messages = Array.isArray(value) ? value : [value];
+            const firstMessage = messages.find(
+                (item): item is string => typeof item === "string",
+            );
+
+            if (firstMessage) {
+                result[field] = translateBackendError(field, firstMessage);
+            } else {
+                result[field] = tv("checkForm");
+            }
+        }
+
+        return result;
+    };
+
     useEffect(() => {
         try {
             const storedUser = localStorage.getItem(USER_STORAGE_KEY);
 
-            if (!storedUser) {
-                return;
-            }
+            if (!storedUser) return;
 
             const parsed = JSON.parse(storedUser);
-
             const user: StoredUser = parsed?.data ?? parsed;
 
             setUserName(user?.name ?? "");
@@ -133,25 +298,17 @@ export default function OrganizationSettings({
 
             const organization = user?.organization;
 
-            if (!organization) {
-                return;
-            }
+            if (!organization) return;
 
             setOrganizationName(organization.name ?? "");
             setOrganizationSlug(organization.slug ?? "");
             setTimezone(organization.timezone ?? "Europe/Madrid");
 
             setLegalName(
-                organization.legalName ??
-                organization.legal_name ??
-                "",
+                organization.legalName ?? organization.legal_name ?? "",
             );
 
-            setTaxId(
-                organization.taxId ??
-                organization.tax_id ??
-                "",
-            );
+            setTaxId(organization.taxId ?? organization.tax_id ?? "");
 
             setBusinessType(
                 organization.businessType ??
@@ -177,7 +334,6 @@ export default function OrganizationSettings({
     }, []);
 
     useEffect(() => {
-        // Skip the initial render and the slug loaded from localStorage.
         if (isFirstSlugCheck.current) {
             isFirstSlugCheck.current = false;
             return;
@@ -207,11 +363,10 @@ export default function OrganizationSettings({
             try {
                 const response = await apiFetch(
                     `organization/onboarding/check-slug?slug=${encodeURIComponent(slug)}`,
+                    { showLoading: false },
                 );
 
-                if (requestId !== slugRequestId.current) {
-                    return;
-                }
+                if (requestId !== slugRequestId.current) return;
 
                 if (!response.ok) {
                     setOrganizationSlugAvailability("idle");
@@ -220,17 +375,13 @@ export default function OrganizationSettings({
 
                 const data = await response.json();
 
-                if (requestId !== slugRequestId.current) {
-                    return;
-                }
+                if (requestId !== slugRequestId.current) return;
 
                 setOrganizationSlugAvailability(
                     data.exists === false ? "available" : "unavailable",
                 );
             } catch (error) {
-                if (requestId !== slugRequestId.current) {
-                    return;
-                }
+                if (requestId !== slugRequestId.current) return;
 
                 console.error(
                     "Organization slug availability check failed:",
@@ -256,63 +407,71 @@ export default function OrganizationSettings({
         const phoneValue = phoneNumber.trim();
 
         if (!name) {
-            errors.name = "Organization name is required.";
+            errors.name = tv("nameRequired");
         } else if (name.length < MIN_ORGANIZATION_NAME_LENGTH) {
-            errors.name = `Organization name must be at least ${MIN_ORGANIZATION_NAME_LENGTH} characters.`;
+            errors.name = tv("nameMin", {
+                min: MIN_ORGANIZATION_NAME_LENGTH,
+            });
         } else if (name.length > MAX_ORGANIZATION_NAME_LENGTH) {
-            errors.name = `Organization name must not exceed ${MAX_ORGANIZATION_NAME_LENGTH} characters.`;
+            errors.name = tv("nameMax", {
+                max: MAX_ORGANIZATION_NAME_LENGTH,
+            });
         }
 
         if (!slug) {
-            errors.slug = "Organization slug is required.";
+            errors.slug = tv("slugRequired");
         } else if (slug.length < MIN_SLUG_LENGTH) {
-            errors.slug = `Organization slug must be at least ${MIN_SLUG_LENGTH} characters.`;
+            errors.slug = tv("slugMin", { min: MIN_SLUG_LENGTH });
         } else if (slug.length > MAX_SLUG_LENGTH) {
-            errors.slug = `Organization slug must not exceed ${MAX_SLUG_LENGTH} characters.`;
+            errors.slug = tv("slugMax", { max: MAX_SLUG_LENGTH });
         } else if (!SLUG_REGEX.test(slug)) {
-            errors.slug =
-                "Organization slug can only contain lowercase letters, numbers and hyphens.";
+            errors.slug = tv("slugInvalid");
         } else if (organizationSlugAvailability === "unavailable") {
-            errors.slug = "This organization slug is already taken.";
+            errors.slug = tv("slugTaken");
         } else if (organizationSlugAvailability !== "available") {
-            errors.slug =
-                "Please wait until the organization slug is available.";
+            errors.slug = tv("slugChecking");
         }
 
         if (!legalNameValue) {
-            errors.legal_name = "Legal name is required.";
+            errors.legal_name = tv("legalNameRequired");
         } else if (legalNameValue.length < MIN_LEGAL_NAME_LENGTH) {
-            errors.legal_name = `Legal name must be at least ${MIN_LEGAL_NAME_LENGTH} characters.`;
+            errors.legal_name = tv("legalNameMin", {
+                min: MIN_LEGAL_NAME_LENGTH,
+            });
         } else if (legalNameValue.length > MAX_LEGAL_NAME_LENGTH) {
-            errors.legal_name = `Legal name must not exceed ${MAX_LEGAL_NAME_LENGTH} characters.`;
+            errors.legal_name = tv("legalNameMax", {
+                max: MAX_LEGAL_NAME_LENGTH,
+            });
         }
 
         if (!taxIdValue) {
-            errors.tax_id = "NIF / Tax ID is required.";
+            errors.tax_id = tv("taxIdRequired");
         } else if (
             taxIdValue.length < MIN_TAX_ID_LENGTH ||
             taxIdValue.length > MAX_TAX_ID_LENGTH
         ) {
-            errors.tax_id = `Tax ID must be between ${MIN_TAX_ID_LENGTH} and ${MAX_TAX_ID_LENGTH} characters.`;
+            errors.tax_id = tv("taxIdLength", {
+                min: MIN_TAX_ID_LENGTH,
+                max: MAX_TAX_ID_LENGTH,
+            });
         } else if (
             !DNI_REGEX.test(taxIdValue) &&
             !NIE_REGEX.test(taxIdValue) &&
             !CIF_REGEX.test(taxIdValue)
         ) {
-            errors.tax_id =
-                "Please enter a valid Spanish NIF, NIE or CIF.";
+            errors.tax_id = tv("taxIdInvalid");
         }
 
         if (!businessType) {
-            errors.business_type = "Business type is required.";
+            errors.business_type = tv("businessTypeRequired");
         } else if (
             !["company", "individual", "non_profit"].includes(businessType)
         ) {
-            errors.business_type = "Invalid business type.";
+            errors.business_type = tv("businessTypeInvalid");
         }
 
         if (!phoneValue) {
-            errors.phone_number = "Phone number is required.";
+            errors.phone_number = tv("phoneRequired");
         } else {
             const normalizedPhone = phoneValue.replace(/[\s().-]/g, "");
 
@@ -320,9 +479,12 @@ export default function OrganizationSettings({
                 normalizedPhone.length < MIN_PHONE_LENGTH ||
                 normalizedPhone.length > MAX_PHONE_LENGTH
             ) {
-                errors.phone_number = `Phone number must be between ${MIN_PHONE_LENGTH} and ${MAX_PHONE_LENGTH} digits.`;
+                errors.phone_number = tv("phoneLength", {
+                    min: MIN_PHONE_LENGTH,
+                    max: MAX_PHONE_LENGTH,
+                });
             } else if (!PHONE_REGEX.test(phoneValue)) {
-                errors.phone_number = "Please enter a valid phone number.";
+                errors.phone_number = tv("phoneInvalid");
             }
         }
 
@@ -332,9 +494,7 @@ export default function OrganizationSettings({
     };
 
     useEffect(() => {
-        if (!isInitialized || isRegistered) {
-            return;
-        }
+        if (!isInitialized || isRegistered) return;
 
         validateForm();
     }, [
@@ -350,15 +510,11 @@ export default function OrganizationSettings({
     ]);
 
     const handleSave = async () => {
-        if (isRegistered) {
-            return;
-        }
+        if (isRegistered) return;
 
         setSaveError(null);
 
-        if (!validateForm()) {
-            return;
-        }
+        if (!validateForm()) return;
 
         setIsSaving(true);
 
@@ -389,19 +545,14 @@ export default function OrganizationSettings({
                     const backendErrors =
                         data?.errors ?? data?.data?.errors ?? {};
 
-                    setFieldErrors(backendErrors);
-
-                    setSaveError(
-                        data?.message ??
-                        "Please check the form and try again.",
-                    );
+                    setFieldErrors(mapBackendErrors(backendErrors));
+                    setSaveError(tv("checkForm"));
 
                     return;
                 }
 
-                throw new Error(
-                    data?.message ?? "Unable to save the organization.",
-                );
+                setSaveError(tv("saveFailed"));
+                return;
             }
 
             const meResponse = await apiFetch("organization/auth/me");
@@ -425,11 +576,8 @@ export default function OrganizationSettings({
 
             window.dispatchEvent(new Event("organization-registered"));
         } catch (error) {
-            setSaveError(
-                error instanceof Error
-                    ? error.message
-                    : "Unable to save the organization.",
-            );
+            console.error("Unable to save organization:", error);
+            setSaveError(tv("saveFailed"));
         } finally {
             setIsSaving(false);
         }
@@ -441,8 +589,7 @@ export default function OrganizationSettings({
     const selectClassName =
         "w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500";
 
-    const errorClassName =
-        "border-red-500 focus:border-red-500 focus:ring-red-500";
+    const errorClassName = "border-red-500 focus:border-red-500 focus:ring-red-500";
 
     return (
         <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -450,10 +597,7 @@ export default function OrganizationSettings({
                 <h3 className="text-base font-semibold text-gray-900">
                     {t.title}
                 </h3>
-
-                <p className="mt-1 text-sm text-gray-500">
-                    {t.description}
-                </p>
+                <p className="mt-1 text-sm text-gray-500">{t.description}</p>
             </div>
 
             <div className="space-y-6">
@@ -466,7 +610,6 @@ export default function OrganizationSettings({
                             >
                                 {t.name}
                             </label>
-
                             <input
                                 id="organization-name"
                                 name="name"
@@ -480,10 +623,8 @@ export default function OrganizationSettings({
                                 }
                                 placeholder={t.namePlaceholder}
                                 autoComplete="organization"
-                                className={`${inputClassName} ${fieldErrors.name ? errorClassName : ""
-                                    }`}
+                                className={`${inputClassName} ${fieldErrors.name ? errorClassName : ""}`}
                             />
-
                             {fieldErrors.name && (
                                 <p className="mt-2 text-sm text-red-600">
                                     {fieldErrors.name}
@@ -498,7 +639,6 @@ export default function OrganizationSettings({
                             >
                                 {t.slug}
                             </label>
-
                             <input
                                 id="organization-slug"
                                 name="slug"
@@ -517,38 +657,28 @@ export default function OrganizationSettings({
                                 }}
                                 placeholder={t.slugPlaceholder}
                                 autoComplete="off"
-                                className={`${inputClassName} ${fieldErrors.slug ? errorClassName : ""
-                                    }`}
+                                className={`${inputClassName} ${fieldErrors.slug ? errorClassName : ""}`}
                             />
 
                             {!isRegistered &&
-                                organizationSlug.trim().length >=
-                                MIN_SLUG_LENGTH &&
-                                organizationSlug.trim().length <=
-                                MAX_SLUG_LENGTH && (
+                                organizationSlug.trim().length >= MIN_SLUG_LENGTH &&
+                                organizationSlug.trim().length <= MAX_SLUG_LENGTH && (
                                     <div className="mt-2 text-sm">
-                                        {organizationSlugAvailability ===
-                                            "checking" && (
-                                                <span className="text-gray-500">
-                                                    Checking availability...
-                                                </span>
-                                            )}
-
-                                        {organizationSlugAvailability ===
-                                            "available" && (
-                                                <span className="text-green-600">
-                                                    Organization slug is
-                                                    available.
-                                                </span>
-                                            )}
-
-                                        {organizationSlugAvailability ===
-                                            "unavailable" && (
-                                                <span className="text-red-600">
-                                                    Organization slug is already
-                                                    taken.
-                                                </span>
-                                            )}
+                                        {organizationSlugAvailability === "checking" && (
+                                            <span className="text-gray-500">
+                                                {tv("slugCheckingStatus")}
+                                            </span>
+                                        )}
+                                        {organizationSlugAvailability === "available" && (
+                                            <span className="text-green-600">
+                                                {tv("slugAvailable")}
+                                            </span>
+                                        )}
+                                        {organizationSlugAvailability === "unavailable" && (
+                                            <span className="text-red-600">
+                                                {tv("slugUnavailable")}
+                                            </span>
+                                        )}
                                     </div>
                                 )}
 
@@ -574,7 +704,6 @@ export default function OrganizationSettings({
                         <h4 className="text-sm font-semibold text-gray-900">
                             {t.business.title}
                         </h4>
-
                         <p className="mt-1 text-sm text-gray-500">
                             {t.business.description}
                         </p>
@@ -588,7 +717,6 @@ export default function OrganizationSettings({
                             >
                                 {t.business.legalName}
                             </label>
-
                             <input
                                 id="legal-name"
                                 name="legal_name"
@@ -597,17 +725,11 @@ export default function OrganizationSettings({
                                 minLength={MIN_LEGAL_NAME_LENGTH}
                                 maxLength={MAX_LEGAL_NAME_LENGTH}
                                 disabled={isRegistered}
-                                onChange={(event) =>
-                                    setLegalName(event.target.value)
-                                }
+                                onChange={(event) => setLegalName(event.target.value)}
                                 placeholder={t.business.legalNamePlaceholder}
                                 autoComplete="organization"
-                                className={`${inputClassName} ${fieldErrors.legal_name
-                                        ? errorClassName
-                                        : ""
-                                    }`}
+                                className={`${inputClassName} ${fieldErrors.legal_name ? errorClassName : ""}`}
                             />
-
                             {fieldErrors.legal_name && (
                                 <p className="mt-2 text-sm text-red-600">
                                     {fieldErrors.legal_name}
@@ -622,7 +744,6 @@ export default function OrganizationSettings({
                             >
                                 {t.business.taxId}
                             </label>
-
                             <input
                                 id="tax-id"
                                 name="tax_id"
@@ -640,10 +761,8 @@ export default function OrganizationSettings({
                                 }
                                 placeholder={t.business.taxIdPlaceholder}
                                 autoComplete="off"
-                                className={`${inputClassName} ${fieldErrors.tax_id ? errorClassName : ""
-                                    }`}
+                                className={`${inputClassName} ${fieldErrors.tax_id ? errorClassName : ""}`}
                             />
-
                             {fieldErrors.tax_id && (
                                 <p className="mt-2 text-sm text-red-600">
                                     {fieldErrors.tax_id}
@@ -658,33 +777,24 @@ export default function OrganizationSettings({
                             >
                                 {t.business.businessType}
                             </label>
-
                             <select
                                 id="business-type"
                                 name="business_type"
                                 value={businessType}
                                 disabled={isRegistered}
-                                onChange={(event) =>
-                                    setBusinessType(event.target.value)
-                                }
-                                className={`${selectClassName} ${fieldErrors.business_type
-                                        ? errorClassName
-                                        : ""
-                                    }`}
+                                onChange={(event) => setBusinessType(event.target.value)}
+                                className={`${selectClassName} ${fieldErrors.business_type ? errorClassName : ""}`}
                             >
                                 <option value="company">
                                     {t.business.types.company}
                                 </option>
-
                                 <option value="individual">
                                     {t.business.types.individual}
                                 </option>
-
                                 <option value="non_profit">
                                     {t.business.types.nonProfit}
                                 </option>
                             </select>
-
                             {fieldErrors.business_type && (
                                 <p className="mt-2 text-sm text-red-600">
                                     {fieldErrors.business_type}
@@ -699,7 +809,6 @@ export default function OrganizationSettings({
                             >
                                 {t.business.phoneNumber}
                             </label>
-
                             <input
                                 id="phone-number"
                                 name="phone_number"
@@ -707,19 +816,11 @@ export default function OrganizationSettings({
                                 value={phoneNumber}
                                 maxLength={MAX_PHONE_LENGTH}
                                 disabled={isRegistered}
-                                onChange={(event) =>
-                                    setPhoneNumber(event.target.value)
-                                }
-                                placeholder={
-                                    t.business.phoneNumberPlaceholder
-                                }
+                                onChange={(event) => setPhoneNumber(event.target.value)}
+                                placeholder={t.business.phoneNumberPlaceholder}
                                 autoComplete="tel"
-                                className={`${inputClassName} ${fieldErrors.phone_number
-                                        ? errorClassName
-                                        : ""
-                                    }`}
+                                className={`${inputClassName} ${fieldErrors.phone_number ? errorClassName : ""}`}
                             />
-
                             {fieldErrors.phone_number && (
                                 <p className="mt-2 text-sm text-red-600">
                                     {fieldErrors.phone_number}
@@ -744,7 +845,7 @@ export default function OrganizationSettings({
                         disabled={isSaving}
                         className="rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                        {isSaving ? "Saving..." : t.save}
+                        {isSaving ? tv("saving") : t.save}
                     </button>
                 </div>
             )}

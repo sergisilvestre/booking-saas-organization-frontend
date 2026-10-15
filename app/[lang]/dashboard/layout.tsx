@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import { getTranslations } from "next-intl/server";
 import Sidebar from "@/app/[lang]/dashboard/Sidebar";
-import SettingsWarnings from "../../../components/onboarding/SettingsWarnings";
-import OnboardingGuard from "@/components/onboarding/OnboardingGuard";
 import { CurrentUserProvider } from "@/components/providers/CurrentUserProvider";
+import OnboardingGuard from "@/components/dashboard/onboarding/OnboardingGuard";
+import SettingsWarnings from "@/components/dashboard/onboarding/SettingsWarnings";
 
 type Props = {
     children: ReactNode;

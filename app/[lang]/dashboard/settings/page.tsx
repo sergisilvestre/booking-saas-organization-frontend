@@ -1,21 +1,15 @@
 import { getMessages } from "next-intl/server";
 import SettingsForm from "./SettingsForm";
-// import SettingsWarnings from "./SettingsWarnings";
 
 type Props = {
-    params: Promise<{
-        lang: string;
-    }>;
+    params: Promise<{ lang: string }>;
 };
 
 export default async function SettingsPage({ params }: Props) {
     const { lang } = await params;
-
     const messages = await getMessages({ locale: lang });
-    const translations = messages.dashboard.settings;
 
-    const accountNeedsValidation = true;
-    const paidBookingsNeedActivation = true;
+    const translations = messages.dashboard.settings;
 
     return (
         <div>
@@ -29,14 +23,7 @@ export default async function SettingsPage({ params }: Props) {
                 </p>
             </div>
 
-            {/* <SettingsWarnings
-                accountNeedsValidation={accountNeedsValidation}
-                paidBookingsNeedActivation={paidBookingsNeedActivation}
-            /> */}
-
-            <SettingsForm
-                translations={translations}
-            />
+            <SettingsForm translations={translations} />
         </div>
     );
 }
